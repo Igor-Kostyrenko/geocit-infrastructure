@@ -1,6 +1,7 @@
 ---
 - name: Install Java
   ansible.builtin.apt:
+    update_cache: yes
     name: openjdk-8-jdk
     state: present
 

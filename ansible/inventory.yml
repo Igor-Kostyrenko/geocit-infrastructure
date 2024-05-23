@@ -1,9 +1,7 @@
-[servers]
-server1 ansible_host=192.168.1.12
-
-[grafana]
-grafana_server ansible_host=192.168.1.12
-
-[all:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_sudo_pass=1
+servers:
+  hosts: 
+    server1:
+      ansible_host: 34.67.118.187
+grafana:
+  hosts: 
+    34.42.19.121:
