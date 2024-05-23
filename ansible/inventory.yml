@@ -2,7 +2,6 @@ servers:
   hosts: 
     server1:
       ansible_host: 34.67.118.187
-      ansible_ssh_private_key_file: ~/.ssh/gcp
 grafana:
   hosts: 
     34.42.19.121:
