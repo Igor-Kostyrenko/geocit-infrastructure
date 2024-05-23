@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') { 
+            steps {
+                git branch: 'jira-51-configure-ansible-for-the-application', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
+                sh 'sed -i -e \'s/34.67.118.187/104.154.61.161/g\' ansible/inventory.yml'
+                sshagent(credentials : ['ansible']) {
+                    sh 'ssh -o StrictHostKeyChecking=no ansible@104.154.61.161'
+                    sh 'exit'
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                dir('ansible/roles') {
+                    ansiblePlaybook playbook: 'geocitizen/geocitizen-role.yml', inventory: '../inventory.yml', credentialsId: 'ansible'
+                }
+                //withCredentials([sshUserPrivateKey(credentialsId: 'ansible', keyFileVariable: 'PRIVATE')]) { // using credentials and storing their data in temp file PRIVATE
+                //    sh 'ansible-playbook -i ../inventory.yml geocitizen/geocitizen-role.yml --private-key $PRIVATE' //using the variable in Ansible
+            }
+        }
+    }
+}
