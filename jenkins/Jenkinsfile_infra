@@ -1,0 +1,25 @@
+pipeline{ 
+    agent any
+    tools {
+      terraform 'terraform'
+    }
+    stages{ 
+		stage('Git Checkout'){
+			steps {
+				script {
+					git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
+				}
+			}
+		}
+		stage('Terraform Init'){
+			steps {
+				sh 'terraform init'
+			}
+		}
+		stage('Terraform Apply'){
+			steps {
+				sh 'terraform apply --auto-approve'
+			}
+		}
+    }  
+}

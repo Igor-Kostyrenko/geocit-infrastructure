@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+    tools {
+        maven "M3"
+    }
+    stages {
+        stage('git clone') {
+            steps{
+                script {
+                    git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
+                }
+            }
+        }
+        stage('Build') {
+                steps{
+                    sh "mvn clean package -Dmaven.test.skip=true"
+                }
+        }
+        stage('Test') {
+                steps{
+                    sh "mvn test"
+                }
+        }
+    }
+}
