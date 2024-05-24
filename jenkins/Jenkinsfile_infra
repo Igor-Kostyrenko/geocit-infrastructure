@@ -1,5 +1,10 @@
 pipeline{ 
     agent any
+     environment {
+        GOOGLE_PROJECT_ID = "capybarageocity" 
+        APP_NAME = "Citizen 2024"
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('capybarageocity')
+    }
     tools {
       terraform 'terraform'
     }
@@ -13,7 +18,15 @@ pipeline{
 		}
 		stage('Terraform Init'){
 			steps {
-				sh 'terraform init'
+                withCredentials([file(credentialsId: 'capybarageocity', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+				cd terraform
+                sh 'terraform init'
+                }
+			}
+		}
+        stage('Terraform Plan'){
+			steps {
+				sh 'terraform plan'
 			}
 		}
 		stage('Terraform Apply'){
