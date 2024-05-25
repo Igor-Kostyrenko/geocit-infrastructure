@@ -5,33 +5,31 @@ pipeline {
         stage('Checkout') { 
             steps {
                 script {
-                    final String content = readFile(file: "hostadresses")
+                    final String content = readFile(file: "../../hostadresses")
                     final List hosts = extractLines(content)
                     properties([
                         parameters([
                             string(
-                                defaultValue: 'monitoring_ip', 
+                                defaultValue: '10.156.0.48', 
                                 name: 'GRAFANA-IP', 
                                 trim: true
                             )
                         ])
                     ])
-                }
-
-                git branch: 'jira-51-configure-ansible-for-the-application', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
-                
-                for (in in hosts) {
-                    sshagent(credentials : ['ansible']) {
-                        env.LoopHost=hosts[i]
-                        env.CurrentIndex=i
-                        sh 'ssh -o StrictHostKeyChecking=no ansible@${env.LoopHost}'
-                        sh 'exit'
+                    git branch: 'jira-51-configure-ansible-for-the-application', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
+                    for (i = 0; i < hosts.size(); i++) {
+                        env.LoopHost = hosts[i]
+                        env.CurrentIndex = i
+                        sshagent(credentials : ['ansible']) {
+                        }
+                            sh "ssh -o StrictHostKeyChecking=no ansible@${env.LoopHost}"
+                            sh "exit"
+                            sh "sed -i -e '/hosts/a ""\t""server$env.CurrentIndex"":\n\t\t""ansible_host"":"" $env.LoopHost' ansible/inventory.yml"
                     }
-                    sh 'sed -i -e '/hosts:/a \tserver${env.CurrentIndex}:\n\t\tansible_host: ${env.LoopHost}' ansible/inventory.yml'
+                    env.GrafanaIp = params.GRAFANA-IP
+                    sh "sed -i -e \'s/monitoring_ip/$env.GrafanaIp/g\' ansible/inventory.yml"
+                    sh "cat ansible/inventory.yml"
                 }
-                env.GrafanaIp = params.GRAFANA-IP
-                sh 'sed -i -e \'s/monitoring_ip/${env.GrafanaIp}/g\' ansible/inventory.yml'
-                sh 'cat ansible/inventory.yml'
             }
         }
         stage('Deploy') {

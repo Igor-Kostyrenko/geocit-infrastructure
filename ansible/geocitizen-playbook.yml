@@ -8,14 +8,12 @@
 
 - name: Install Docker Cadvisor Node Exporte
   hosts: servers
-  remote_user: ubuntu
   become: true
   roles:
     - {role: deploy_exporters, when: ansible_system =='Linux'}
   
 - name: Install Docker Prometheus Grafana
   hosts: grafana
-  remote_user: ubuntu
   become: true
   roles:
     - {role: deploy_promgrafnode, when: ansible_system =='Linux'}
