@@ -11,7 +11,7 @@ pipeline {
                         parameters([
                             string(
                                 defaultValue: '10.156.0.48', 
-                                name: 'GRAFANA-IP', 
+                                name: 'GRAFANAIP', 
                                 trim: true
                             )
                         ])
@@ -21,13 +21,14 @@ pipeline {
                         env.LoopHost = hosts[i]
                         env.CurrentIndex = i
                         sshagent(credentials : ['ansible']) {
-                        }
                             sh "ssh -o StrictHostKeyChecking=no ansible@${env.LoopHost}"
                             sh "exit"
-                            sh "sed -i -e '/hosts/a ""\t""server$env.CurrentIndex"":\n\t\t""ansible_host"":"" $env.LoopHost' ansible/inventory.yml"
+                        }
+                        sh "sed -i -e '/grafana:/ i TAB${env.LoopHost}:' ansible/inventory.yml"
                     }
-                    env.GrafanaIp = params.GRAFANA-IP
-                    sh "sed -i -e \'s/monitoring_ip/$env.GrafanaIp/g\' ansible/inventory.yml"
+                    sh "sed -i 's/TAB/    /' ansible/inventory.yml"
+                    env.Grafana = params.GRAFANAIP
+                    sh "sed -i -e \'s/monitoring_ip/${env.Grafana}/g\' ansible/inventory.yml"
                     sh "cat ansible/inventory.yml"
                 }
             }
@@ -35,7 +36,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 dir('ansible/roles') {
-                    ansiblePlaybook playbook: 'geocitizen/geocitizen-playbook.yml', inventory: '../inventory.yml', credentialsId: 'ansible'
+                    ansiblePlaybook playbook: '../geocitizen-playbook.yml', inventory: '../inventory.yml', credentialsId: 'ansible'
                 }
             }
         }

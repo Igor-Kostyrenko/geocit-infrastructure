@@ -50,7 +50,7 @@ services:
     image: prom/alertmanager:v0.26.0
     container_name: alertmanager
     volumes:
-      - /home/ubuntu/promgrafnode/alertmanager/alert-config.yml:/etc/alertmanager/config.yml
+      - ~/promgrafnode/alertmanager/alert-config.yml:/etc/alertmanager/config.yml
       - alertmanager-data:/data
     command:
       - "--config.file=/etc/alertmanager/config.yml"
@@ -66,7 +66,7 @@ services:
     image: prom/blackbox-exporter
     container_name: blackbox-exporter
     volumes:
-      - /home/ubuntu/promgrafnode/blackbox-exporter/blackbox-exporter-config.yml:/etc/blackbox-exporter/config.yml
+      - ~/promgrafnode/blackbox-exporter/blackbox-exporter-config.yml:/etc/blackbox-exporter/config.yml
     command:
       - '--config.file=/etc/blackbox-exporter/config.yml'
     ports:

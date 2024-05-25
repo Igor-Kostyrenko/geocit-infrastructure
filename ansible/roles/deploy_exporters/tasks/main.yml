@@ -42,15 +42,14 @@
 
 - name: Install Docker and related packages
   ansible.builtin.apt:
-    name: "{{ item }}"
     state: present
     update_cache: true
-  loop:
-    - docker-ce
-    - docker-ce-cli
-    - containerd.io
-    - docker-buildx-plugin
-    - docker-compose-plugin
+    pkg:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
 
 - name: Add Docker group
   ansible.builtin.group:
@@ -72,8 +71,6 @@
 - name: Change file ownership, group and permissions
   ansible.builtin.file:
     path: /usr/local/bin/docker-compose
-    owner: ubuntu
-    group: ubuntu
 
 - name: Enable and start Docker services
   ansible.builtin.systemd:
@@ -86,7 +83,7 @@
 
 - name: Create necessary directories
   ansible.builtin.file:
-    path: /home/ubuntu/promgrafnode
+    path: ~/promgrafnode
     state: directory
     mode: '0755'
   
