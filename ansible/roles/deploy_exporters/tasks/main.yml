@@ -45,7 +45,7 @@
     name: "{{ item }}"
     state: present
     update_cache: true
-  loop:
+  pkg:
     - docker-ce
     - docker-ce-cli
     - containerd.io
