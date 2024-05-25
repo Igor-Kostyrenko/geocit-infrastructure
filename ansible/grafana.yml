@@ -1,7 +1,0 @@
-- name: Install Grafana Agent Flow
-  hosts: grafana_server
-  become: true
-  tasks:
-    - name: Install Grafana Agent Flow
-      ansible.builtin.include_role:
-        name: grafana.grafana.alloy

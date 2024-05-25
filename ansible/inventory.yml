@@ -1,7 +1,6 @@
 servers:
   hosts: 
-    server1:
-      ansible_host: 34.67.118.187
 grafana:
   hosts: 
-    34.42.19.121:
+    monitoring_node:
+      ansible_host: monitoring_ip

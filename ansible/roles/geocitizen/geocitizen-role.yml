@@ -1,7 +1,0 @@
----
-- name: "Geo citizen role"
-  hosts: servers
-  become: yes
-  become_method: sudo
-  roles:
-    - geocitizen
