@@ -19,13 +19,13 @@ scrape_configs:
   - job_name: "node"
     scrape_interval: 15s 
     static_configs: 
-    - targets: ["{node_ip}:9100"]
+    - targets: ["10.156.0.52:9100"]
     
 
   - job_name: "cadvisor" 
     scrape_interval: 15s 
     static_configs: 
-    - targets: ["{cadvisor_ip}:9200"]
+    - targets: ["10.156.0.52:9200"]
 
   - job_name: 'blackbox'
     metrics_path: /probe
