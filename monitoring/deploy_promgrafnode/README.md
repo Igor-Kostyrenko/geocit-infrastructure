@@ -1,38 +1,18 @@
-Role Name
-=========
+# Ansible Role: Prometheus & Grafana Deployment
 
-A brief description of the role goes here.
+This Ansible role is aimed at setting up a monitoring solution by deploying Prometheus and Grafana inside Docker containers. This setup allows for robust monitoring and visualization of metrics across your systems.
 
-Requirements
-------------
+## Requirements
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+- Host operating systems should be based on Linux.
+- Ansible 2.9 or newer.
 
-Role Variables
---------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Deployment Steps
+- Docker Installation: Ensures Docker is installed on the target host.
+- Docker Compose Setup: Installs Docker Compose to manage multi-container Docker applications.
+- Containers Deployment: Deploys the Prometheus and Grafana containers using Docker Compose.
 
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+##Monitoring Components
+- Prometheus: Collects and stores metrics as time series data.
+- Grafana: Provides a powerful and elegant interface for visualizing the metrics collected by Prometheus.
