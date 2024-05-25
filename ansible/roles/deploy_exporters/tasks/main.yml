@@ -30,14 +30,14 @@
     update_cache: yes
 
 - name: Install Docker
-    ansible.builtin.apt:
-      name: 
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
-        - docker-buildx-plugin
-        - docker-compose-plugin
-       state: present
+  ansible.builtin.apt:
+    name: 
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
 
 - name: Add Docker group
   ansible.builtin.group:
