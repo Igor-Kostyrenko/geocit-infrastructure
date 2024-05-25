@@ -1,6 +1,6 @@
 ---
 # tasks file for deploy_exporters
-- name: Update and upgrade all packages to the latest version
+- name: Update and upgrade all packages
   ansible.builtin.apt:
     update_cache: true
     upgrade: dist
