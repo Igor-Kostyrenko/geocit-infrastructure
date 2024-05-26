@@ -105,6 +105,13 @@
     owner: ubuntu
     group: ubuntu
 
+- name: Copy ENV file
+  copy:
+    src: .env
+    dest: "{{ destin_folder }}/.env"
+    owner: ubuntu
+    group: ubuntu
+    
 - name: Copy grafana datasources file
   copy:
     src: grafana_datasources.yml
