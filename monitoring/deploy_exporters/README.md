@@ -1,38 +1,24 @@
-Role Name
-=========
+# Ansible Role: Metric Exporters Setup
 
-A brief description of the role goes here.
+This Ansible role is designed to deploy two key metric exporters, cAdvisor and Node Exporter, using Docker and Docker Compose. It ensures Docker is installed, configures Docker Compose, and deploys both containers to gather system and container metrics efficiently.
 
-Requirements
-------------
+## Requirements
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+- Linux host (Ubuntu, CentOS, Debian, etc.)
+- Ansible 2.9 or higher
 
-Role Variables
---------------
+## Role Variables
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+The main variables for this role are listed below (see `defaults/main.yml` for default values):
 
-Dependencies
-------------
+## Installation Steps
+- Install Docker: Ensures Docker is present on the system.
+- Install Docker Compose: Deploys Docker Compose using the specified version.
+- Deploy Exporters: Utilizes Docker Compose to start the cAdvisor and Node Exporter containers.
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+Container Details
+- cAdvisor (Container Advisor): Monitors container performance and resource usage.
+- Node Exporter: Provides system and hardware metrics suitable for monitoring.
 
-Example Playbook
-----------------
+### The configuration and deployment are managed through the docker-compose.yml file located at *files/docker-compose.yml*.
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
