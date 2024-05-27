@@ -1,8 +1,8 @@
 plugin: gcp_compute
 projects:
-  - {{ lookup('ansible.builtin.env', 'GCP_PROJECT') }}
+  - ansible_env['GCP_PROJECT']
 auth_kind: serviceaccount
-service_account_file: {{ lookup('ansible.builtin.env', 'GCP_SERVICE_ACCOUNT_FILE') }}
+service_account_file: ansible_env['GCP_SERVICE_ACCOUNT_FILE']
 groups:
   servers: "'app' in name"
   grafana: "'monitoring' in name"
