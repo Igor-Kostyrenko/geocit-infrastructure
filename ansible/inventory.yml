@@ -1,6 +1,9 @@
-servers:
-  hosts: 
-grafana:
-  hosts: 
-    monitoring_node:
-      ansible_host: monitoring_ip
+---
+plugin: gcp_compute
+projects:
+  - {{ lookup('ansible.builtin.env', 'GCP_PROJECT') }}
+auth_kind: serviceaccount
+service_account_file: {{ lookup('ansible.builtin.env', 'GCP_CREDENTIALS') }}
+groups:
+  servers: "'app' in name"
+  grafana: "'monitoring' in name"

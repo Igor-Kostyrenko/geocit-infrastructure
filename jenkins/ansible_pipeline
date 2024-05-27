@@ -20,6 +20,7 @@ pipeline {
                     for (i = 0; i < hosts.size(); i++) {
                         env.LoopHost = hosts[i]
                         env.CurrentIndex = i
+                        sh "ssh-keygen -f '/var/lib/jenkins/.ssh/known_hosts' -R '${env.LoopHost}'"
                         sshagent(credentials : ['ansible']) {
                             sh "ssh -o StrictHostKeyChecking=no ansible@${env.LoopHost}"
                             sh "exit"
@@ -28,8 +29,11 @@ pipeline {
                     }
                     sh "sed -i 's/TAB/    /' ansible/inventory.yml"
                     env.Grafana = params.GRAFANAIP
+                    sshagent(credentials : ['ansible']) {
+                        sh "ssh -o StrictHostKeyChecking=no ansible@${env.Grafana}"
+                        sh "exit"
+                    }
                     sh "sed -i -e \'s/monitoring_ip/${env.Grafana}/g\' ansible/inventory.yml"
-                    sh "cat ansible/inventory.yml"
                 }
             }
         }
