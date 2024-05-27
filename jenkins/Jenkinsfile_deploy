@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        IP_SERVERS = []
+    }
     tools {
         maven "M3"
     }
@@ -17,6 +20,20 @@ pipeline {
                 )
             }
         }
+        stage('Get Output') {
+            steps {
+                script {
+                    def hostAddressesFile = 'hostaddresses'
+                    copyArtifacts(
+                        projectName: 'infrastructure', 
+                        filter: hostAddressesFile, 
+                        selector: lastSuccessful()
+                    )
+                    def content = readFile file: hostAddressesFile
+                    env.IP_SERVERS = content.split(",")
+                }
+            }
+        }
         stage('Build Back-end') {
                 steps{
                     sh "mvn clean package -Dmaven.test.skip=true"
@@ -26,6 +43,15 @@ pipeline {
                 steps{
                     sh "mvn test"
                 }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    env.IP_SERVERS.each { ip ->
+                        sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war username@${ip}:/opt/tomcat/webapps/"
+                    }
+                }
+            }
         }
     }
     post {
