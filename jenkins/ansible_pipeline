@@ -1,57 +1,37 @@
-pipeline {
-    agent any
+# Terraform Resource Block - To Build Web Server in Public Subnet
+resource "aws_instance" "web_server" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.public_subnets["public_subnet_1"].id
+  security_groups             = [aws_security_group.vpc-ping.id, 
+     aws_security_group.ingress-ssh.id, aws_security_group.vpc-web.id]
+  associate_public_ip_address = true
+  key_name                    = aws_key_pair.generated.key_name
+  connection {
+    user        = "ubuntu"
+    private_key = tls_private_key.generated.private_key_pem
+    host        = self.public_ip
+  }
 
-    stages {
-        stage('Checkout') { 
-            steps {
-                script {
-                    final String content = readFile(file: "../../hostadresses")
-                    final List hosts = extractLines(content)
-                    properties([
-                        parameters([
-                            string(
-                                defaultValue: '10.156.0.48', 
-                                name: 'GRAFANAIP', 
-                                trim: true
-                            )
-                        ])
-                    ])
-                    git branch: 'jira-51-configure-ansible-for-the-application', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
-                    for (i = 0; i < hosts.size(); i++) {
-                        env.LoopHost = hosts[i]
-                        env.CurrentIndex = i
-                        sh "ssh-keygen -f '/var/lib/jenkins/.ssh/known_hosts' -R '${env.LoopHost}'"
-                        sshagent(credentials : ['ansible']) {
-                            sh "ssh -o StrictHostKeyChecking=no ansible@${env.LoopHost}"
-                            sh "exit"
-                        }
-                        sh "sed -i -e '/grafana:/ i TAB${env.LoopHost}:' ansible/inventory.yml"
-                    }
-                    sh "sed -i 's/TAB/    /' ansible/inventory.yml"
-                    env.Grafana = params.GRAFANAIP
-                    sshagent(credentials : ['ansible']) {
-                        sh "ssh -o StrictHostKeyChecking=no ansible@${env.Grafana}"
-                        sh "exit"
-                    }
-                    sh "sed -i -e \'s/monitoring_ip/${env.Grafana}/g\' ansible/inventory.yml"
-                }
-            }
-        }
-        stage('Deploy') {
-            steps {
-                dir('ansible/roles') {
-                    ansiblePlaybook playbook: '../geocitizen-playbook.yml', inventory: '../inventory.yml', credentialsId: 'ansible'
-                }
-            }
-        }
-    }
-}
+  # Leave the first part of the block unchanged and create our `local-exec` provisioner
+  provisioner "local-exec" {
+    command = "chmod 600 ${local_file.private_key_pem.filename}"
+  }
 
-@NonCPS
-List extractLines(final String content) {
-    List hosts = []
-    content.eachLine { line -> 
-        hosts << line
-    }
-    return hosts
+  provisioner "remote-exec" {
+    inline = [
+      "sudo rm -rf /tmp",
+      "sudo git clone https://github.com/hashicorp/demo-terraform-101 /tmp",
+      "sudo sh /tmp/assets/setup-web.sh",
+    ]
+  }
+
+  tags = {
+    Name = "Web EC2 Server"
+  }
+
+  lifecycle {
+    ignore_changes = [security_groups]
+  }
+
 }
