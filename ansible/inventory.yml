@@ -1,7 +1,7 @@
 ---
 plugin: gcp_compute
 projects:
-  - {{ ansible_env['GCP_PROJECT'] }}
+  - "{{ ansible_env['GCP_PROJECT'] }}"
 auth_kind: serviceaccount
 service_account_file: {{ ansible_env['GCP_CREDENTIALS'] }}
 groups:
