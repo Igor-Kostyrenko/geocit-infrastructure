@@ -20,6 +20,4 @@ variable "zone" {
   type        = string
   default     = "europe-west3-c"
 }
-variable "google_credentials" {
-default= ""
-}
+

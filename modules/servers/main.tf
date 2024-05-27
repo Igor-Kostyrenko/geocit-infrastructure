@@ -207,3 +207,4 @@ resource "google_compute_firewall" "fw_ilb_to_backends" {
     ports    = ["80", "443", "8080", "9100", "9200","22"]
   }
 }
+
