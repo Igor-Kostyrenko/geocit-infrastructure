@@ -1,8 +1,11 @@
 plugin: gcp_compute
+vars:
+    gcp_project: ansible_env['GCP_PROJECT']
+    gcp_creds: ansible_env['GCP_SERVICE_ACCOUNT_FILE']
 projects:
-  - ansible_env['GCP_PROJECT']
+  - "{{gcp_project}}"
 auth_kind: serviceaccount
-service_account_file: ansible_env['GCP_SERVICE_ACCOUNT_FILE']
+service_account_file: "{{gcp_creds}}"
 groups:
   servers: "'app' in name"
   grafana: "'monitoring' in name"
