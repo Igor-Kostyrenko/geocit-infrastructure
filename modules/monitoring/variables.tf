@@ -22,7 +22,7 @@ variable "image" {
     type =  string
     description = "image type"
     default = "ubuntu-os-cloud/ubuntu-2204-lts"
-  
+     
 }
 
 variable "project" {
