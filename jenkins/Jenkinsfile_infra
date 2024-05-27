@@ -1,9 +1,8 @@
 pipeline{ 
     agent any
      environment {
-        GOOGLE_PROJECT_ID = "capybarageocity" 
-        APP_NAME = "Citizen 2024"
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('capybarageocity')
+		TF_IN_AUTOMATION = 'true'
+		CREDENTIALS = credentials('terraform_creds')
     }
     tools {
       terraform 'terraform'
@@ -12,26 +11,26 @@ pipeline{
 		stage('Git Checkout'){
 			steps {
 				script {
-					git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
+					git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit-infrastructure.git'
 				}
 			}
 		}
-		stage('Terraform Init'){
+		stage('Terraform'){
 			steps {
-                withCredentials([file(credentialsId: 'capybarageocity', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-				cd terraform
-                sh 'terraform init'
+                withCredentials([[$class: 'FileBinding', credentialsId: 'terraform_creds', variable: 'JSON_KEY']]) {
+					sh 'gcloud auth activate-service-account --key-file $JSON_KEY'
+					sh 'terraform init'
+					sh 'terraform plan'
+
+				}
+			}
+		}
+		stage('IP Output'){
+			steps {
+				script {
+                    def ips = sh(script: 'terraform output -json', returnStdout: true).trim()
+                    writeFile file: '/var/lib/jenkins/hostaddresses', text: ips
                 }
-			}
-		}
-        stage('Terraform Plan'){
-			steps {
-				sh 'terraform plan'
-			}
-		}
-		stage('Terraform Apply'){
-			steps {
-				sh 'terraform apply --auto-approve'
 			}
 		}
     }  

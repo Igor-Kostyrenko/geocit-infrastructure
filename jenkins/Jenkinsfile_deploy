@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        IP_SERVERS = [],
-        SSH_USER = 'username'
+        IP_SERVERS = ''
+        SSH_USER = 'tomcat'
     }
     tools {
         maven "M3"
@@ -13,25 +13,15 @@ pipeline {
                 script {
                     git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
                 }
-                emailext (
-                    subject: "STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                    body: """<p>STARTED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
-                        <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-                    recipientProviders: [[$class: 'DevelopersRecipientProvider']]
-                )
             }
         }
         stage('Get Output') {
             steps {
                 script {
-                    def hostAddressesFile = 'hostaddresses'
-                    copyArtifacts(
-                        projectName: 'infrastructure', 
-                        filter: hostAddressesFile, 
-                        selector: lastSuccessful()
-                    )
-                    def content = readFile file: hostAddressesFile
-                    env.IP_SERVERS = content.split(",")
+                    final String content = readFile(file: "/var/lib/jenkins/hostaddresses")
+                    final List hosts = extractLines(content)
+                    IP_SERVERS = hosts.join(',')
+                    echo "IP addresses: ${IP_SERVERS}"
                 }
             }
         }
@@ -48,7 +38,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    env.IP_SERVERS.each { ip ->
+                     IP_SERVERS.each { ip ->
                         sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war ${env.SSH_USER}@${ip}:/opt/tomcat/webapps/"
                     }
                 }
@@ -56,24 +46,7 @@ pipeline {
         }
     }
     post {
-        success {
-            emailext (
-                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' has completed successfully:</p>
-                <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-                to: 'oleksii.taranyk@gmail.com'
-            )
-        }
-        failure {
-            emailext (
-                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' has failed:</p>
-                <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-                to: 'oleksii.taranyk@gmail.com'
-            )
-        }
         always {
-            sendNotifications currentBuild.result
             cleanWs()
         }
     }
