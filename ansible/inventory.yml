@@ -1,7 +1,7 @@
 ---
 plugin: gcp_compute
 projects:
-  - "{{ lookup('ansible.builtin.env', 'GCP_PROJECT') }}"
+  - capybarageocity
 auth_kind: serviceaccount
 service_account_file: "{{ lookup('ansible.builtin.env', 'GCP_CREDENTIALS') }}"
 groups:
