@@ -59,8 +59,8 @@
 - name: Change file ownership, group and permissions
   ansible.builtin.file:
     path: /usr/local/bin/docker-compose
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Enable and start Docker services
   ansible.builtin.systemd:
@@ -75,8 +75,8 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: ubuntu  
-    group: ubuntu  
+    owner: ansible  
+    group: ansible  
     mode: '0755'  
   loop:
     - "{{ destin_folder }}/prometheus"
@@ -88,38 +88,37 @@
   copy:
     src: docker-compose-vm2.yml
     dest: "{{ destin_folder }}/docker-compose.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Copy prometheus config file
   copy:
     src: prometheus.yml
     dest: "{{ destin_folder }}/prometheus/prometheus.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Copy alert rules file
   copy:
     src: alert_rules.yml
     dest: "{{ destin_folder }}/prometheus/alert_rules.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Copy alert config file
   copy:
     src: alert_rules.yml
     dest: "{{ destin_folder }}/alertmanager/alert-config.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Copy blackbox config file
   copy:
     src: blackbox-exporter-config.yml
     dest: "{{ destin_folder }}/blackbox-exporter/blackbox-exporter-config.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Run Docker Compose
   shell: docker-compose -f {{ destin_folder }}//docker-compose.yml up -d
   become: true
-  become_user: ubuntu
