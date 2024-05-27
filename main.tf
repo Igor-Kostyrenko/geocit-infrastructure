@@ -1,5 +1,14 @@
+terraform {
+  cloud {
+    organization = "capybarateam"
+
+    workspaces {
+      name = "test"
+    }
+  }
+}
 provider "google" {
-  credentials = file("credentials.json")
+  credentials = var.google_credentials
   project = var.project
   region = var.region
   zone = var.zone 
