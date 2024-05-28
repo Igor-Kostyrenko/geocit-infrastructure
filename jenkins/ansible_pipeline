@@ -1,37 +1,35 @@
-# Terraform Resource Block - To Build Web Server in Public Subnet
-resource "aws_instance" "web_server" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t2.micro"
-  subnet_id                   = aws_subnet.public_subnets["public_subnet_1"].id
-  security_groups             = [aws_security_group.vpc-ping.id, 
-     aws_security_group.ingress-ssh.id, aws_security_group.vpc-web.id]
-  associate_public_ip_address = true
-  key_name                    = aws_key_pair.generated.key_name
-  connection {
-    user        = "ubuntu"
-    private_key = tls_private_key.generated.private_key_pem
-    host        = self.public_ip
-  }
+pipeline {
+    agent any
 
-  # Leave the first part of the block unchanged and create our `local-exec` provisioner
-  provisioner "local-exec" {
-    command = "chmod 600 ${local_file.private_key_pem.filename}"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo rm -rf /tmp",
-      "sudo git clone https://github.com/hashicorp/demo-terraform-101 /tmp",
-      "sudo sh /tmp/assets/setup-web.sh",
-    ]
-  }
-
-  tags = {
-    Name = "Web EC2 Server"
-  }
-
-  lifecycle {
-    ignore_changes = [security_groups]
-  }
-
+    stages {
+        stage('Checkout') { 
+            steps {
+                git branch: 'jira-51-configure-ansible-for-the-application', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                dir('ansible/roles') {
+                    withCredentials([file(credentialsId: 'google_secret_file', variable: 'GCP_SERVICE_ACCOUNT_FILE')]) {
+                        script {
+                            sh "gcloud compute instances list --format=json | jq '.[] | select(.name|startswith(\"app\")) | .networkInterfaces[].networkIP' > targets.json" 
+                            
+                            env.GCP_PROJECT = "capybarageocity"
+                            env.TARGETS_JSON = "../../targets.json"
+                            
+                            //Targets file mapping
+                            sh 'envsubst < deploy_promgrafnode/files/prometheus.yml | tee deploy_promgrafnode/files/prometheus_temp.yml'
+                            sh 'mv deploy_promgrafnode/files/prometheus_temp.yml deploy_promgrafnode/files/prometheus.yml'
+                            
+                            //Inventory mapping
+                            sh 'envsubst < ../inventory.gcp.yml | tee ../inventory_temp.gcp.yml'
+                            sh 'mv ../inventory_temp.gcp.yml ../inventory.gcp.yml'
+                        }
+                        sh "ansible-inventory -i '../inventory.gcp.yml' --graph"
+                        ansiblePlaybook playbook: '../geocitizen-playbook.yml', inventory: '../inventory.gcp.yml', credentialsId: 'ansible', extras: '--ssh-extra-args="-o StrictHostKeyChecking=no"'
+                    }
+                }
+            }
+        }
+    }
 }
