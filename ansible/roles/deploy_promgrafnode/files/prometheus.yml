@@ -18,14 +18,16 @@ scrape_configs:
 
   - job_name: "node"
     scrape_interval: 15s 
-    static_configs: 
-    - targets: ["10.156.0.52:9100"]
+    file_sd_configs:
+      - files:
+        - TARGETS_JSON
     
 
   - job_name: "cadvisor" 
     scrape_interval: 15s 
-    static_configs: 
-    - targets: ["10.156.0.52:9200"]
+    file_sd_configs:
+      - files:
+        - TARGETS_JSON
 
   - job_name: 'blackbox'
     metrics_path: /probe
