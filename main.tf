@@ -12,9 +12,6 @@ data "google_compute_network" "default" {
   name = "default"
 }
 
-module bucket {
-  source = "./modules/bucket"
-}
 
 module "pq" {
 

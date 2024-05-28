@@ -129,7 +129,7 @@ resource "google_compute_instance_group_manager" "api" {
   }
 
   target_pools = [google_compute_target_pool.appserver.id]
-  target_size  = 2
+  
 
   named_port {
     name = "http"
@@ -180,7 +180,7 @@ resource "google_compute_autoscaler" "api" {
 
   autoscaling_policy {
     max_replicas    = 3
-    min_replicas    = 2
+    min_replicas    = 3
     cooldown_period = 60
 
     cpu_utilization {
@@ -207,4 +207,5 @@ resource "google_compute_firewall" "fw_ilb_to_backends" {
     ports    = ["80", "443", "8080", "9100", "9200","22"]
   }
 }
+
 
