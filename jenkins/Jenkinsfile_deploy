@@ -1,29 +1,35 @@
 pipeline {
     agent any
-    environment {
-        IP_SERVERS = ''
-        SSH_USER = 'tomcat'
-    }
     tools {
         maven "M3"
     }
     stages {
-        stage('git clone') {
+        stage('git checkout') {
             steps{
                 script {
                     git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
                 }
             }
         }
-        stage('Get Output') {
-            steps {
-                script {
-                    final String content = readFile(file: "/var/lib/jenkins/hostaddresses")
-                    final List hosts = extractLines(content)
-                    IP_SERVERS = hosts.join(',')
-                    echo "IP addresses: ${IP_SERVERS}"
+        stage('Get IP') {
+                steps{
+                    script {
+                    def extractIpsScript = '''
+                        #!/bin/bash
+                        output_file="ip_addresses.txt"
+                        gcloud compute instances list --format=table\\(name,networkInterfaces[0].networkIP\\) | \
+                        awk \'NR>1 && $1 != "jenkins-vm" && $1 != "monitoring1" {print $1}\' > "$output_file"
+
+                        while IFS= read -r ip; do
+                            echo "$ip"
+                        done < "$output_file"
+
+                        echo "IP addresses have been saved to $output_file"
+                    '''
+                    sh extractIpsScript
+                    env.IP_ADDRESSES = readFile('ip_addresses.txt').trim()
+                    }
                 }
-            }
         }
         stage('Build Back-end') {
                 steps{
@@ -38,8 +44,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                     IP_SERVERS.each { ip ->
-                        sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war ${env.SSH_USER}@${ip}:/opt/tomcat/webapps/"
+                    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                        env.IP_ADDRESSES.split('\n').each { ip ->
+                            sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war tomcat@${ip}:/opt/tomcat/webapps/ --zone=europe-west3-c"
+                        }
                     }
                 }
             }
