@@ -20,14 +20,14 @@ scrape_configs:
     scrape_interval: 15s 
     file_sd_configs:
       - files:
-        - TARGETS_JSON
+        - $TARGETS_JSON
     
 
   - job_name: "cadvisor" 
     scrape_interval: 15s 
     file_sd_configs:
       - files:
-        - TARGETS_JSON
+        - $TARGETS_JSON
 
   - job_name: 'blackbox'
     metrics_path: /probe
