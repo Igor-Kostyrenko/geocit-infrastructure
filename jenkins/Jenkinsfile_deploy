@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+    tools {
+        maven "M3"
+    }
+    stages {
+        stage('git clone') {
+            steps {
+                script {
+                    git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
+                }
+            }
+        }
+        stage('Configure') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'env', variable: 'CREDENTIALS_FILE')]) {
+                        def json = readJSON file: "${CREDENTIALS_FILE}"
+                        
+                        def appProp = "src/main/resources/application.properties"
+                        
+                        sh "sed -i 's|^db.username=.*|db.username=${json.db.username}|' ${appProp}"
+                        sh "sed -i 's|^db.password=.*|db.password=${json.db.password}|' ${appProp}"
+                        sh "sed -i 's|^username=.*|username=${json.username}|' ${appProp}"
+                        sh "sed -i 's|^password=.*|password=${json.password}|' ${appProp}"
+                        sh "sed -i 's|^email.username=.*|email.username=${json.email.username}|' ${appProp}"
+                        sh "sed -i 's|^email.password=.*|email.password=${json.email.password}|' ${appProp}"
+                        sh "sed -i 's|^map.key=.*|map.key=${json.map.key}|' ${appProp}"
+                        
+                        sh "cat ${appProp}"
+                    }
+                }
+            }
+        }
+        stage('Build Back-end') {
+            steps {
+                sh "mvn clean package -Dmaven.test.skip=true"
+            }
+        }
+        stage('Test Back-end') {
+            steps {
+                sh "mvn test"
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
