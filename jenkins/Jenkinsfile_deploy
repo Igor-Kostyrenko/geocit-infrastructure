@@ -28,6 +28,26 @@ pipeline {
                     '''
                     sh extractIpsScript
                     env.IP_ADDRESSES = readFile('ip_addresses.txt').trim()
+
+                    def addressesList = sh(script: "gcloud compute addresses list --format=json", returnStdout: true).trim()
+                    def json = readJSON text: addressesList
+                    def externalIp = json.find { it.TYPE == 'EXTERNAL' }?.ADDRESS
+                    if (externalIp) {
+                        env.EXTERNAL_IP = externalIp
+                        echo "External IP: ${externalIp}"
+                    } else {
+                        error "No external IP address found with type EXTERNAL."
+                    }
+                    }
+
+                    def dbInfo = sh(script: "gcloud sql instances describe postgres-db --format=json", returnStdout: true).trim()
+                    def json = readJSON text: dbInfo
+                    def dbIp = json.ipAddresses.find { it.type == 'PRIVATE' }?.ipAddress
+                    if (dbIp) {
+                        env.DB_IP = dbIp
+                        echo "DB IP: ${dbIp}"
+                    } else {
+                        error "No DB IP address found."
                     }
                 }
         }
@@ -45,8 +65,8 @@ pipeline {
             steps {
                 script {
                     withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-                        env.IP_ADDRESSES.split('\n').each { ip ->
-                            sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war tomcat@${ip}:/opt/tomcat/webapps/ --zone=europe-west3-c"
+                        env.IP_ADDRESSES.split('\n').each { instance_name ->
+                            sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war tomcat@${instance_name}:/opt/tomcat/webapps/ --zone=europe-west3-c"
                         }
                     }
                 }
