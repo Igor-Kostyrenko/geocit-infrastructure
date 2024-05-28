@@ -15,7 +15,7 @@ pipeline {
 			steps {
 			    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
 			        sh 'terraform init -no-color'
-				    sh 'terraform plan -no-color'
+				    sh 'terraform plan -out=tfplan -no-color '
 			    }
 			}
 		}
@@ -31,7 +31,7 @@ pipeline {
 		stage('Approve'){
 			steps {
 			    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-				    sh 'terraform apply -auto-approve -no-color'
+				    sh 'terraform apply -auto-approve -no-color tfplan'
 			    }
 			}
 		}
