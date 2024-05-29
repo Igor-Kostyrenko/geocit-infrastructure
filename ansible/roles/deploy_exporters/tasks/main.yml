@@ -59,8 +59,8 @@
 - name: Change file ownership, group and permissions
   ansible.builtin.file:
     path: /usr/local/bin/docker-compose
-    owner: ansible
-    group: ansible
+    owner: ubuntu
+    group: ubuntu
 
 - name: Enable and start Docker services
   ansible.builtin.systemd:
@@ -73,19 +73,14 @@
 
 - name: Create necessary directories
   ansible.builtin.file:
-    path: ~/promgrafnode
+    path: /home/ubuntu/promgrafnode
     state: directory
-    owner: ansible
-    group: ansible
     mode: '0755'
-  
 
 - name: Copy Docker Compose file
   copy:
     src: docker-compose-vm1.yml
     dest: "{{ destin_folder }}/docker-compose.yml"
-    owner: ansible
-    group: ansible
 
 - name: Remove existing Docker containers
   docker_container:
