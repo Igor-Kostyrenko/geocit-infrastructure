@@ -4,10 +4,39 @@ pipeline {
         maven "M3"
     }
     stages {
-        stage('git clone') {
+        stage('git checkout') {
             steps {
                 script {
                     git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
+                }
+            }
+        }
+        stage('Check IP') {
+            steps {
+                withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                    script {
+                        def monitoringIP = sh(script: 'gcloud compute instances list --format=json | jq \'.[] | select(.name|startswith("monitoring")) | .networkInterfaces[].networkIP\'', returnStdout: true).trim()
+                        def instanceIP = sh(script: 'gcloud compute instances list --format=json | jq \'.[] | select(.name|startswith("app")) | {name: .name, ip: .networkInterfaces[0].networkIP}\'', returnStdout: true).trim()
+                        def postgresIP = sh(script: 'gcloud sql instances describe postgres-db --format=json | jq -r \'{name: .name, ip: .ipAddresses[0].ipAddress}\'', returnStdout: true).trim()
+                        def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
+                        
+                        echo "External IP: ${externalIP}"
+                        echo "Monitoring IP: ${monitoringIP}"
+                        echo "Instance IP: ${instanceIP}"
+                        echo "Postgres IP: ${postgresIP}"
+                
+                        def postgresData = readJSON text: postgresIP
+                        def postgresIPAddress = postgresData.ip
+
+                        def externalData = readJSON text: externalIP
+                        def externalIPAddress = externalData.ip
+
+                        env.externalIP = externalIPAddress
+                        env.postgresIP = postgresIPAddress
+            
+                        echo "Postgres IP Address: ${env.postgresIP}"
+                        echo "external IP Address: ${env.externalIP}"
+                    }
                 }
             }
         }
@@ -18,12 +47,16 @@ pipeline {
                         def json = readJSON file: "${CREDENTIALS_FILE}"
                         
                         def appProp = "src/main/resources/application.properties"
-                        def app_js= "/src/main/webapp/static/js/app.*.js"
-
-                        sed -i "s/localhost:8080/$ip:8080/g" $app_prop
-                        sed -i "s/localhost:5432/$ip_db:5432/g" $app_prop
-                        sed -i "s/localhost/$ip/g" $app_js
-                                                
+                        def app_js = "src/main/webapp/static/js/app.*.js"
+                        def ip = env.externalIP
+                        def ip_db = env.postgresIP
+                        
+                        sh "echo $ip"
+                        sh "echo $ip_db"
+                        sh "sed -i 's/localhost:8080/$ip:8080/g' $appProp"
+                        sh "sed -i 's/localhost:5432/$ip_db:5432/g' $appProp"
+                        sh "sed -i 's/localhost/$ip/g' $app_js"
+                        
                         sh "sed -i 's|^db.username=.*|db.username=${json.db.username}|' ${appProp}"
                         sh "sed -i 's|^db.password=.*|db.password=${json.db.password}|' ${appProp}"
                         sh "sed -i 's|^username=.*|username=${json.username}|' ${appProp}"
@@ -45,6 +78,15 @@ pipeline {
         stage('Test Back-end') {
             steps {
                 sh "mvn test"
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                        sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war tomcat@tomcat:/opt/tomcat/webapps/ --zone=europe-west3-c"
+                    }
+                }
             }
         }
     }
