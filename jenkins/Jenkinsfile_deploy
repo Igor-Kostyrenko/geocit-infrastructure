@@ -17,10 +17,12 @@ pipeline {
                         script {
                             def monitoringIP = sh(script: 'gcloud compute instances list --format=json | jq \'.[] | select(.name|startswith("monitoring")) | .networkInterfaces[].networkIP\'', returnStdout: true).trim()
                             def instanceIP = sh(script: 'gcloud compute instances list --format=json | jq \'.[] | select(.name|startswith("app")) | {name: .name, ip: .networkInterfaces[0].networkIP}\'', returnStdout: true).trim()
+                            def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
                             def postgresIP = sh(script: 'gcloud sql instances describe postgres-db --format=json | jq -r \'{name: .name, ip: .ipAddresses[0].ipAddress}\'', returnStdout: true).trim()
                            
                             echo "Monitoring IP: ${monitoringIP}"
                             echo "Instance IP: ${instanceIP}"
+                            echo "External IP: ${externalIP}"
                             echo "Postgres IP: ${postgresIP}"
                         }
                 }
