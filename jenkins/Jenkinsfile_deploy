@@ -42,7 +42,12 @@ pipeline {
             steps {
                 script {
                     withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-                            sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war tomcat@tomcat:/opt/tomcat/webapps/ --zone=europe-west3-c"
+                            def getIP = sh(script: 'gcloud compute instances list --format=json | jq \'.[] | select(.name|startswith("app")) | .name\'', returnStdout: true).trim()
+                            echo "Instance IP: ${getIP}"
+                            getIP.split('\n').each { name ->
+                                echo "Transferring to instance: ${name}"
+                                sh "gcloud compute scp /var/lib/jenkins/workspace/Deploy/target/citizen.war tomcat@${name}:/opt/tomcat/webapps/ --zone=europe-west3-c"
+                            }
                     }
                 }
             }
