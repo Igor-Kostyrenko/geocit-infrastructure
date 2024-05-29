@@ -35,17 +35,6 @@ pipeline {
 			    }
 			}
 		}
-		stage('Destroy') {
-            input {
-                message "Do you want to destroy the infrastructure?"
-                ok "Destroy"
-            }
-            steps {
-                withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-                    sh 'terraform destroy -auto-approve -no-color'
-                }
-            }
-       	}
     }
     post {
         always {

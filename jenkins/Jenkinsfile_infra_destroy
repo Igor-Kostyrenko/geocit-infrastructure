@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    tools {
+        terraform 'terraform'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit-infrastructure.git'
+                }
+            }
+        }
+        stage('Init') {
+            steps {
+                withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                    sh 'terraform init'
+                }
+            }
+        }
+        stage('Destroy') {
+            input {
+                message "Do you want to destroy the infrastructure?"
+                ok "Destroy"
+            }
+            steps {
+                withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                    sh 'terraform destroy -auto-approve -no-color'
+                }
+            }
+       	}
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
