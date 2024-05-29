@@ -18,7 +18,12 @@ pipeline {
                         def json = readJSON file: "${CREDENTIALS_FILE}"
                         
                         def appProp = "src/main/resources/application.properties"
-                        
+                        def app_js= "/src/main/webapp/static/js/app.*.js"
+
+                        sed -i "s/localhost:8080/$ip:8080/g" $app_prop
+                        sed -i "s/localhost:5432/$ip_db:5432/g" $app_prop
+                        sed -i "s/localhost/$ip/g" $app_js
+                                                
                         sh "sed -i 's|^db.username=.*|db.username=${json.db.username}|' ${appProp}"
                         sh "sed -i 's|^db.password=.*|db.password=${json.db.password}|' ${appProp}"
                         sh "sed -i 's|^username=.*|username=${json.username}|' ${appProp}"
