@@ -6,3 +6,4 @@
 *.tfstate.*
 *.json
 *.terraform.lock*
+*.tflint.hcl
