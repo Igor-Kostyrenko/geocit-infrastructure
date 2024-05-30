@@ -9,13 +9,13 @@ resource "google_compute_instance" "grafana" {
   zone         = var.zone
   tags         = ["grafana"]
 
-  
+
 
   boot_disk {
     initialize_params {
       image = var.image
+    }
   }
-      }
 
   network_interface {
     network = "default"
@@ -32,9 +32,8 @@ resource "google_compute_instance" "grafana" {
   }
 }
 
-
 resource "google_compute_firewall" "fw-monitoring" {
-  project = var.project
+  project       = var.project
   name          = "fw-monitoring"
   direction     = "INGRESS"
   network       = data.google_compute_network.default.id
@@ -42,6 +41,6 @@ resource "google_compute_firewall" "fw-monitoring" {
   target_tags   = ["grafana"]
   allow {
     protocol = "tcp"
-    ports    = ["9090", "9093","9115","3000", "22", "443"]
+    ports    = ["9090", "9093", "9115", "3000", "22", "443"]
   }
 }
