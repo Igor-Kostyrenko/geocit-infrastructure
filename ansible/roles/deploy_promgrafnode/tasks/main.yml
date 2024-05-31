@@ -149,7 +149,7 @@
   shell: docker rm -f $(docker ps -a -q)
   become_user: ansible
   
- - name: Remove docker volumes
+- name: Remove docker volumes
   shell: docker volume rm $(docker volume ls -q)
   become_user: ansible
   
