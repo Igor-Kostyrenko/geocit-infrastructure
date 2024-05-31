@@ -13,9 +13,9 @@ services:
     container_name: prometheus
     restart: unless-stopped
     volumes:
-      - ~/promgrafnode/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ~/promgrafnode/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
-      - ~/promgrafnode/prometheus:/prometheus
+      - /home/ansible/promgrafnode/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - /home/ansible/promgrafnode/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - /home/ansible/promgrafnode/prometheus:/prometheus
 
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -36,8 +36,8 @@ services:
       - 3000:3000
     restart: unless-stopped
     volumes:
-      - ~/promgrafnode/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ~/promgrafnode/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - /home/ansible/promgrafnode/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - /home/ansible/promgrafnode/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
     networks:
       - monitoring
     
@@ -47,7 +47,7 @@ services:
     container_name: alertmanager
     restart: on-failure
     volumes:
-      - ~/promgrafnode/alertmanager/alert-config.yml:/etc/alertmanager/config.yml
+      - /home/ansible/promgrafnode/alertmanager/alert-config.yml:/etc/alertmanager/config.yml
       - alertmanager-data:/data
     command:
       - "--config.file=/etc/alertmanager/config.yml"
@@ -71,7 +71,7 @@ services:
     image: prom/blackbox-exporter
     container_name: blackbox-exporter
     volumes:
-      - ~/promgrafnode/blackbox-exporter/blackbox-exporter-config.yml:/etc/blackbox-exporter/config.yml
+      - /home/ansible/promgrafnode/blackbox-exporter/blackbox-exporter-config.yml:/etc/blackbox-exporter/config.yml
     command:
       - '--config.file=/etc/blackbox-exporter/config.yml'
     ports:

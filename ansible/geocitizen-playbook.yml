@@ -17,6 +17,5 @@
   hosts: grafana
   become: true
   become_method: sudo
-  become_user: ansible
   roles:
     - {role: deploy_promgrafnode, when: ansible_system =='Linux'}
