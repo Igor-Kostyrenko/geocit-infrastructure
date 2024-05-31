@@ -142,6 +142,6 @@
     group: ansible
 
 - name: Run Docker Compose
-  shell: docker-compose -f {{ destin_folder }}//docker-compose.yml up -d
+  shell: docker-compose -f {{ destin_folder }}/docker-compose.yml up -d
   become: true
   become_user: ansible
