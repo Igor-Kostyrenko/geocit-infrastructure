@@ -80,7 +80,7 @@ resource "google_compute_firewall" "artifactory_firewall" {
   target_tags   = ["artifactory"]
   allow {
     protocol = "tcp"
-    ports    = ["8081"]
+    ports    = ["8081", "8082"]
   }
 }
 
