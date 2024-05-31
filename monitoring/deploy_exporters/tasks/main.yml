@@ -1,6 +1,6 @@
 ---
 # tasks file for deploy_exporters
-- name: Update and upgrade all packages to the latest version
+- name: Update and upgrade all packages
   ansible.builtin.apt:
     update_cache: true
     upgrade: dist
@@ -15,42 +15,29 @@
       - gnupg
       - software-properties-common
 
-- name: Create directory for Docker's GPG key
-  ansible.builtin.file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: '0755'
-
 - name: Add Docker's official GPG key
   ansible.builtin.apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
-    keyring: /etc/apt/keyrings/docker.gpg
     state: present
 
-- name: Print architecture variables
-  ansible.builtin.debug:
-    msg: "Architecture: {{ ansible_architecture }}, Codename: {{ ansible_lsb.codename }}"
-
-- name: Add Docker repository
+- name: Add Docker's APT repository
   ansible.builtin.apt_repository:
-    repo: >-
-      deb [arch={{ arch_mapping[ansible_architecture] | default(ansible_architecture) }}
-      signed-by=/etc/apt/keyrings/docker.gpg]
-      https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
-    filename: docker
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
     state: present
 
-- name: Install Docker and related packages
+- name: Update apt cache
   ansible.builtin.apt:
-    name: "{{ item }}"
+    update_cache: yes
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: 
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
     state: present
-    update_cache: true
-  loop:
-    - docker-ce
-    - docker-ce-cli
-    - containerd.io
-    - docker-buildx-plugin
-    - docker-compose-plugin
 
 - name: Add Docker group
   ansible.builtin.group:
@@ -89,7 +76,6 @@
     path: /home/ubuntu/promgrafnode
     state: directory
     mode: '0755'
-  
 
 - name: Copy Docker Compose file
   copy:

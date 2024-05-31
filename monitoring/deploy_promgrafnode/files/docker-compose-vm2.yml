@@ -10,10 +10,6 @@ volumes:
 services:
   prometheus:
     image: prom/prometheus
-    user: "1000"
-    environment:
-      - PUID=1000
-      - PGID=1000
     container_name: prometheus
     restart: unless-stopped
     volumes:
@@ -35,7 +31,6 @@ services:
 
   grafana:
     image: grafana/grafana-oss:main-ubuntu
-    user: "1000"
     container_name: grafana
     ports:
       - 3000:3000

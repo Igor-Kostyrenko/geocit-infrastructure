@@ -15,42 +15,29 @@
       - gnupg
       - software-properties-common
 
-- name: Create directory for Docker's GPG key
-  ansible.builtin.file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: '0755'
-
 - name: Add Docker's official GPG key
   ansible.builtin.apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
-    keyring: /etc/apt/keyrings/docker.gpg
     state: present
 
-- name: Print architecture variables
-  ansible.builtin.debug:
-    msg: "Architecture: {{ ansible_architecture }}, Codename: {{ ansible_lsb.codename }}"
-
-- name: Add Docker repository
+- name: Add Docker's APT repository
   ansible.builtin.apt_repository:
-    repo: >-
-      deb [arch={{ arch_mapping[ansible_architecture] | default(ansible_architecture) }}
-      signed-by=/etc/apt/keyrings/docker.gpg]
-      https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
-    filename: docker
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
     state: present
 
-- name: Install Docker and related packages
+- name: Update apt cache
   ansible.builtin.apt:
-    name: "{{ item }}"
+    update_cache: yes
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: 
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
     state: present
-    update_cache: true
-  loop:
-    - docker-ce
-    - docker-ce-cli
-    - containerd.io
-    - docker-buildx-plugin
-    - docker-compose-plugin
 
 - name: Add Docker group
   ansible.builtin.group:
@@ -86,13 +73,18 @@
 
 - name: Create necessary directories
   ansible.builtin.file:
+    path: /home/ubuntu/promgrafnodeprometheus
+    state: directory
+    mode: '0777'
+
+- name: Create necessary directories
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: ubuntu  
-    group: ubuntu  
+    owner: ansible
+    group: ansible  
     mode: '0755'  
   loop:
-    - "{{ destin_folder }}/prometheus"
     - "{{ destin_folder }}/alertmanager"
     - "{{ destin_folder }}/blackbox-exporter"
     - "{{ destin_folder }}/grafana/provisioning/datasources"
@@ -102,29 +94,29 @@
   copy:
     src: docker-compose-vm2.yml
     dest: "{{ destin_folder }}/docker-compose.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Copy ENV file
   copy:
     src: .env
     dest: "{{ destin_folder }}/.env"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
     
 - name: Copy grafana datasources file
   copy:
     src: grafana_datasources.yml
     dest: "{{ destin_folder }}/grafana/provisioning/datasources/prometheus.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Copy configuration dashboards files
   copy:
     src: "{{ item.src }}"
     dest: "{{ destin_folder }}/grafana/provisioning/dashboards/{{ item.dest }}"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
   loop:
     - { src: 'blackbox_exporter.json', dest: 'blackbox_exporter.json' }
     - { src: 'dashboards.yml', dest: 'dashboards.yml' }
@@ -134,8 +126,8 @@
   copy:
     src: "{{ item.src }}"
     dest: "{{ destin_folder }}/prometheus/{{ item.dest }}"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
   loop:
     - { src: 'prometheus.yml', dest: 'prometheus.yml' }
     - { src: 'alert_rules.yml', dest: 'alert_rules.yml' }
@@ -144,17 +136,17 @@
   copy:
     src: alert_rules.yml
     dest: "{{ destin_folder }}/alertmanager/alert-config.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Copy blackbox config file
   copy:
     src: blackbox-exporter-config.yml
     dest: "{{ destin_folder }}/blackbox-exporter/blackbox-exporter-config.yml"
-    owner: ubuntu
-    group: ubuntu
+    owner: ansible
+    group: ansible
 
 - name: Run Docker Compose
   shell: docker-compose -f {{ destin_folder }}//docker-compose.yml up -d
   become: true
-  become_user: ubuntu
+  become_user: ansible

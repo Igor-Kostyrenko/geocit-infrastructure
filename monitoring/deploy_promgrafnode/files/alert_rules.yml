@@ -36,20 +36,14 @@ groups:
       labels:
         severity: warning
       for: 2m
-    # - alert: Host high CPU load
-    #   expr: '100 - (avg by(insta knce) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80'
-    #   annotations:
-    #    description: CPU load is > 80%
-    #   labels:
-    #     severity: warning
     - alert: HostHighCpuLoad
-      expr: (sum by (instance) (avg by (mode, instance) (rate(node_cpu_seconds_total{mode!="idle"}[2m]))) > 0.01) * on(instance) group_left (nodename) node_uname_info{nodename=~".+"}
+      expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
       for: 10m
       labels:
         severity: warning
       annotations:
-        summary: Host high CPU load (instance {{ $labels.instance }})
-        description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        summary: "High CPU load detected on {{ $labels.instance }}"
+        description: "CPU load is above 80%.\nCurrent value: {{ $value }}%"
     - alert: Host OOM kill detected
       expr: 'increase(node_vmstat_oom_kill[1m]) > 0'
       annotations:

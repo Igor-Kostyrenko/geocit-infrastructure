@@ -36,7 +36,7 @@ scrape_configs:
         - icmp
     static_configs:
       - targets:
-        - https://google.com/
+        - https://capybara.pp.ua/
         
     relabel_configs:
       - source_labels: [__address__]
@@ -61,7 +61,7 @@ scrape_configs:
       
     static_configs:
       - targets:
-        - https://google.com/
+        - https://capybara.pp.ua/
 
   - job_name: blackbox-http
     metrics_path: /probe
@@ -78,4 +78,4 @@ scrape_configs:
       
     static_configs:
     - targets:
-      - https://google.com/
+      - https://capybara.pp.ua/
