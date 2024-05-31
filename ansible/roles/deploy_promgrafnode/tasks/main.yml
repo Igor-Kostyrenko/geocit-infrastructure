@@ -142,7 +142,7 @@
     group: ansible
 
 - name: Docker Compose Down
-  shell: docker compose down -f {{ destin_folder }}/docker-compose.yml
+  shell: docker compose -f {{ destin_folder }}/docker-compose.yml down
   become_user: ansible
 
 - name: Remove running containers
