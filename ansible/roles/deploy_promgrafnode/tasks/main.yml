@@ -142,7 +142,7 @@
     group: ansible
 
 - name: Remove running containers
-  shell: docker compose down && docker rm -f $(docker ps -a -q) && docker volume rm $(docker volume ls -q)
+  shell: docker compose down -f {{ destin_folder }}/docker-compose.yml && docker rm -f $(docker ps -a -q) && docker volume rm $(docker volume ls -q)
   become_user: ansible
 
 - name: Run Docker Compose
