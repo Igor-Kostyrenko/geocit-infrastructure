@@ -1,8 +1,3 @@
-provider "google" {
-  project = var.project
-  region  = var.region
-}
-
 resource "google_compute_address" "artifactory_ip" {
   name   = "artifactory-ip"
   region = var.region
