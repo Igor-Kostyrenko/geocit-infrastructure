@@ -77,7 +77,7 @@
     state: directory
     owner: ansible  
     group: ansible  
-    mode: '0755'  
+    mode: '0777'
   loop:
     - "{{ destin_folder }}/prometheus"
     - "{{ destin_folder }}/alertmanager"
