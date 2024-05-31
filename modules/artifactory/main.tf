@@ -58,11 +58,19 @@ resource "google_compute_instance" "artifactory" {
     EOT
 
   tags = ["artifactory"]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "google_compute_address" "artifactory_ip" {
   name   = "artifactory-ip"
   region = var.region
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "google_compute_firewall" "artifactory_firewall" {
