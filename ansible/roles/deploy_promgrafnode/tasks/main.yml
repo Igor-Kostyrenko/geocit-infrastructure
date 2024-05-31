@@ -129,7 +129,7 @@
 
 - name: Copy alert config file
   copy:
-    src: alert_rules.yml
+    src: alert_config.yml
     dest: "{{ destin_folder }}/alertmanager/alert-config.yml"
     owner: ansible
     group: ansible
