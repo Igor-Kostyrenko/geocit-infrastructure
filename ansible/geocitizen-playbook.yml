@@ -6,7 +6,7 @@
   roles:
     - {role: geocitizen, when: ansible_system =='Linux'}
 
-- name: Install Docker Cadvisor Node Exporte
+- name: Install Docker Cadvisor Node Exporters
   hosts: servers
   become: true
   become_method: sudo
@@ -17,5 +17,6 @@
   hosts: grafana
   become: true
   become_method: sudo
+  become_user: ansible
   roles:
     - {role: deploy_promgrafnode, when: ansible_system =='Linux'}
