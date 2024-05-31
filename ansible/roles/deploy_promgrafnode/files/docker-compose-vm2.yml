@@ -10,10 +10,6 @@ volumes:
 services:
   prometheus:
     image: prom/prometheus
-    user: "1000"
-    environment:
-      - PUID=1000
-      - PGID=1000
     container_name: prometheus
     restart: unless-stopped
     volumes:
@@ -34,8 +30,7 @@ services:
     
 
   grafana:
-    image: grafana/grafana-oss:main-ubuntu
-    user: "1000"
+    image: grafana/grafana-oss:main-ansible
     container_name: grafana
     ports:
       - 3000:3000
@@ -52,7 +47,7 @@ services:
     container_name: alertmanager
     restart: on-failure
     volumes:
-      - /home/ubuntu/promgrafnode/alertmanager/alert-config.yml:/etc/alertmanager/config.yml
+      - /home/ansible/promgrafnode/alertmanager/alert-config.yml:/etc/alertmanager/config.yml
       - alertmanager-data:/data
     command:
       - "--config.file=/etc/alertmanager/config.yml"
@@ -76,11 +71,10 @@ services:
     image: prom/blackbox-exporter
     container_name: blackbox-exporter
     volumes:
-      - /home/ubuntu/promgrafnode/blackbox-exporter/blackbox-exporter-config.yml:/etc/blackbox-exporter/config.yml
+      - /home/ansible/promgrafnode/blackbox-exporter/blackbox-exporter-config.yml:/etc/blackbox-exporter/config.yml
     command:
       - '--config.file=/etc/blackbox-exporter/config.yml'
     ports:
       - 9115:9115
     networks:
       - monitoring
-    
