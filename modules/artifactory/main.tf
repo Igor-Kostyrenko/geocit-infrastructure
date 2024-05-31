@@ -3,6 +3,15 @@ provider "google" {
   region  = var.region
 }
 
+resource "google_compute_address" "artifactory_ip" {
+  name   = "artifactory-ip"
+  region = var.region
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "google_compute_instance" "artifactory" {
   name         = "artifactory-vm"
   machine_type = var.machine_type
@@ -58,15 +67,6 @@ resource "google_compute_instance" "artifactory" {
     EOT
 
   tags = ["artifactory"]
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "google_compute_address" "artifactory_ip" {
-  name   = "artifactory-ip"
-  region = var.region
 
   lifecycle {
     prevent_destroy = true
