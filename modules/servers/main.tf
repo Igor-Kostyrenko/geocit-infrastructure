@@ -51,8 +51,10 @@ resource "google_compute_global_forwarding_rule" "http" {
   count      = var.enable_http ? 1 : 0
   project    = var.project
   name       = "${var.name}-http-rule"
+  load_balancing_scheme = "EXTERNAL"
+  ip_protocol           = "TCP"
   target     = google_compute_target_http_proxy.http[0].self_link
-  ip_address = google_compute_global_address.default.address
+  ip_address = google_compute_global_address.default.id
   port_range = "80"
 
   depends_on = [google_compute_global_address.default]
@@ -105,8 +107,8 @@ resource "google_compute_health_check" "default" {
     port         = 80
   }
 
-  check_interval_sec = 5
-  timeout_sec        = 5
+  check_interval_sec = 30
+  timeout_sec        = 10
 }
 
 
@@ -133,7 +135,7 @@ resource "google_compute_instance_group_manager" "api" {
 
   named_port {
     name = "http"
-    port = 80
+    port = 8080
   }
 
   auto_healing_policies {
@@ -163,13 +165,14 @@ resource "google_compute_instance_template" "appserver" {
   network_interface {
     network = data.google_compute_network.default.id
   }
-
    metadata = {
     "ssh-keys" = <<EOT
       ansible: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCslfUc3Cjn8HMaIzs/362n8REXP7a+O7cEioyUEd9FaiApsKsxDui7tNPNhE9dO5Bzaa3MNjdx17rTWzlgUK7g/KboqJ8+iHU5lK6c6QEDOJd3O0gG7pQGOTkPJ2wuUsfuv39p3vz20Q5UlBWPmX92YXArcfWzc0l55ZQQkZj20ZqfgjmCrmBiyuoVhMuogBAIjQGwkWqm7HSucJBEGG6e+rFWFfM9q2uueAYIXOX85l4ZEH3XN4N1EbN52sDV648dMX/rrb6TXam9SEd6w2u60Mn3oCVdIj17n+nlY8LJdm62x0gj5NM3+h7JuIlcX322/u79n50ZXmcps4+BBXgx ansible
      EOT
   }
-
+  lifecycle {
+    create_before_destroy = true
+  }
 
 }
 resource "google_compute_autoscaler" "api" {
@@ -180,11 +183,11 @@ resource "google_compute_autoscaler" "api" {
 
   autoscaling_policy {
     max_replicas    = 3
-    min_replicas    = 3
+    min_replicas    = 2
     cooldown_period = 60
 
     cpu_utilization {
-      target = 0.5
+      target = 0.9
     }
   }
   

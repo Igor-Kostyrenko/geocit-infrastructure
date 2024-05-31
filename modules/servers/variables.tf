@@ -85,7 +85,7 @@ variable "machine_type" {
 
     description = "Define the type of machine for instance group"
     type        = string
-    default     = "e2-micro"
+    default     = "e2-medium"
   
 }
 
