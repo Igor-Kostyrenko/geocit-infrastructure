@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+    environment {
+        GCP_PROJECT = "capybarageocity"
+        GCP_ZONE = "europe-west3-c"
+        GCP_FILE = '/var/lib/jenkins/application_default_credentials.json'
+        DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1245334329715068988/M0L-purMxZlTKqhX5In0ldMEwBRJmLrwg_6PTg7va0FennV8AsnxU7Z94DUD5IrIRW-1'
+    }
+    stages {
+        stage('Checkout') { 
+            steps {
+                git branch: 'jira-51-configure-ansible-for-the-application', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
+            }
+        }
+        stage('Preparation') {
+            steps {
+                dir('ansible/roles') {
+                    withCredentials([file(credentialsId: 'google_secret_file', variable: 'GCP_SERVICE_ACCOUNT_FILE')]) {
+                        script {
+                            env.MONITORING_IP = sh(script: "gcloud compute instances list --format=json | jq -r '.[] | select(.name|startswith(\"monitoring\")) | .networkInterfaces[].networkIP'", returnStdout: true).trim()
+
+                            // Mapping targets file
+                            sh '''
+                                envsubst < deploy_promgrafnode/files/prometheus.yml > deploy_promgrafnode/files/prometheus_temp.yml
+                                mv deploy_promgrafnode/files/prometheus_temp.yml deploy_promgrafnode/files/prometheus.yml
+                            '''
+                            
+                            // Mapping .env file
+                            sh '''
+                                envsubst < deploy_promgrafnode/files/.env > deploy_promgrafnode/files/.env_temp
+                                mv deploy_promgrafnode/files/.env_temp deploy_promgrafnode/files/.env
+                            '''
+                            
+                            // Mapping inventory file
+                            sh '''
+                                envsubst < ../inventory.gcp.yml > ../inventory_temp.gcp.yml
+                                mv ../inventory_temp.gcp.yml ../inventory.gcp.yml
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        stage('Credentials') {
+            steps {
+                sshagent(credentials: ['ansible']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ansible@${env.MONITORING_IP} "mkdir -p .config/gcloud/"
+                        scp -o StrictHostKeyChecking=no ${GCP_FILE} ansible@${env.MONITORING_IP}:~/.config/gcloud/application_default_credentials.json
+                    """
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                dir('ansible/roles') {
+                    ansiblePlaybook playbook: '../geocitizen-playbook.yml', 
+                                    inventory: '../inventory.gcp.yml', 
+                                    credentialsId: 'ansible', 
+                                    extras: '--ssh-extra-args="-o StrictHostKeyChecking=no"'
+                }
+            }
+        }
+    }
+    post {
+            always {
+                cleanWs()
+            }
+    }
+}

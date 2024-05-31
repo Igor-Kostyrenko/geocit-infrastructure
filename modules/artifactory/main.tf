@@ -25,9 +25,7 @@ resource "google_compute_instance" "artifactory" {
     }
   }
 
-  metadata = <<EOT
-        
-    EOT
+  metadata_start_jfrog = file("${path.module}/start_jfrog.sh")
 
   tags = ["artifactory"]
 
@@ -44,6 +42,15 @@ resource "google_compute_firewall" "artifactory_firewall" {
   allow {
     protocol = "tcp"
     ports    = ["8081", "8082"]
+  }
+}
+
+resource "google_storage_bucket" "artifactory_bucket" {
+  name     = var.bucket_name
+  location = var.region
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
