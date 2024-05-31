@@ -141,6 +141,10 @@
     owner: ansible
     group: ansible
 
+- name: Remove running containers
+  shell: docker compose down && docker rm -f $(docker ps -a -q) && docker volume rm $(docker volume ls -q)
+  become_user: ansible
+
 - name: Run Docker Compose
   shell: docker compose -f {{ destin_folder }}/docker-compose.yml up -d
   become_user: ansible
