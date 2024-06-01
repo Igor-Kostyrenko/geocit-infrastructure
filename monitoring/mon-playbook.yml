@@ -1,0 +1,9 @@
+
+---
+- name: Install Docker Prometheus Grafana
+  hosts: vm2
+  remote_user: ubuntu  
+  become: true
+  
+  roles:
+  - {role: deploy_promgrafnode, when: ansible_system =='Linux'}

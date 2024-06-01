@@ -1,0 +1,3 @@
+---
+# defaults file for deploy_promgrafnode
+destin_folder: /home/ubuntu/promgrafnode
