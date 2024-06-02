@@ -32,16 +32,21 @@ variable "name" {
   default     = "http-lb"
 }
 
+variable "ssl_certificates" {
+  description = "List of SSL cert self links. Required if 'enable_ssl' is 'true'."
+  type        = list(string)
+  default     = []
+}
 variable "enable_ssl" {
   description = "Set to true to enable ssl. If set to 'true', you will also have to provide 'var.custom_domain_name'."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_http" {
   description = "Set to true to enable plain http. Note that disabling http does not force SSL and/or redirect HTTP traffic. See https://issuetracker.google.com/issues/35904733"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "static_content_bucket_location" {

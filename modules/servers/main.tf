@@ -40,28 +40,58 @@ resource "google_compute_global_address" "default" {
 # IF PLAIN HTTP ENABLED, CREATE FORWARDING RULE AND PROXY
 # ------------------------------------------------------------------------------
 
-resource "google_compute_target_http_proxy" "http" {
-  count   = var.enable_http ? 1 : 0
-  project = var.project
-  name    = "${var.name}-http-proxy"
-  url_map = google_compute_url_map.urlmap.id
+# ------------------------------------------------------------------------------
+# IF SSL ENABLED, CREATE FORWARDING RULE AND PROXY
+# ------------------------------------------------------------------------------
+
+data "google_compute_ssl_certificate" "lb_ssl" {
+  name = "capybaratest"  
+}
+resource "google_compute_url_map" "http-redirect" {
+  name = "http-redirect"
+
+  default_url_redirect {
+    strip_query            = false
+    https_redirect         = true  
+  }
 }
 
-resource "google_compute_global_forwarding_rule" "http" {
-  count      = var.enable_http ? 1 : 0
-  project    = var.project
-  name       = "${var.name}-http-rule"
-  load_balancing_scheme = "EXTERNAL"
-  ip_protocol           = "TCP"
-  target     = google_compute_target_http_proxy.http[0].self_link
-  ip_address = google_compute_global_address.default.id
-  port_range = "80"
+resource "google_compute_target_http_proxy" "http-redirect" {
+  name    = "http-redirect"
+  url_map = google_compute_url_map.http-redirect.self_link
+}
 
+resource "google_compute_global_forwarding_rule" "http-redirect" {
+  name       = "http-redirect"
+  target     = google_compute_target_http_proxy.http-redirect.self_link
+  ip_address = google_compute_global_address.default.address
+  port_range = "80"
+}
+
+resource "google_compute_global_forwarding_rule" "https" {
+  
+  project    = var.project
+  count      = var.enable_ssl ? 1 : 0
+  name       = "${var.name}-https-rule"
+  target     = google_compute_target_https_proxy.default[0].self_link
+  ip_address = google_compute_global_address.default.address
+  port_range = "443"
   depends_on = [google_compute_global_address.default]
 
   labels = var.custom_labels
 }
 
+resource "google_compute_target_https_proxy" "default" {
+  project = var.project
+  count   = var.enable_ssl ? 1 : 0
+  name    = "${var.name}-https-proxy"
+  url_map = google_compute_url_map.urlmap.id
+
+  ssl_certificates = [
+    data.google_compute_ssl_certificate.lb_ssl.self_link
+  ]
+
+}
 # ------------------------------------------------------------------------------
 # CREATE THE URL MAP TO MAP PATHS TO BACKENDS
 # ------------------------------------------------------------------------------
@@ -83,7 +113,7 @@ resource "google_compute_backend_service" "api" {
   description = "API Backend for ${var.name}"
   protocol    = "HTTP"
   timeout_sec = 10
-  enable_cdn  = false
+  
 
   backend {
     group = google_compute_instance_group_manager.api.instance_group
@@ -104,7 +134,7 @@ resource "google_compute_health_check" "default" {
   name    = "${var.name}-hc"
 
   http_health_check {
-    port         = 80
+    port         = 8080
   }
 
   check_interval_sec = 30
@@ -135,7 +165,7 @@ resource "google_compute_instance_group_manager" "api" {
 
   named_port {
     name = "http"
-    port = 8080
+    port = 80
   }
 
   auto_healing_policies {
@@ -184,7 +214,7 @@ resource "google_compute_autoscaler" "api" {
   autoscaling_policy {
     max_replicas    = 3
     min_replicas    = 2
-    cooldown_period = 60
+    cooldown_period = 600
 
     cpu_utilization {
       target = 0.9
