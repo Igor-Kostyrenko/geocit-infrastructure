@@ -5,3 +5,6 @@
 *.tfstate
 *.tfstate.*
 *.json
+*.terraform.lock*
+*.tflint.hcl
+**/.vscode/*

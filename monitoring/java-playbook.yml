@@ -1,9 +1,0 @@
-
----
-- name: Install Docker Cadvisor Node Exporte
-  hosts: vm1
-  remote_user: ubuntu  
-  become: true
-  
-  roles:
-  - {role: deploy_exporters, when: ansible_system =='Linux'}
