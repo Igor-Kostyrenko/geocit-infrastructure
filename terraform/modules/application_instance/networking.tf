@@ -34,11 +34,11 @@ resource "google_compute_target_http_proxy" "http" {
 
 resource "google_compute_global_forwarding_rule" "http" {
   name       = "${var.env}-${var.region}-geo-http-rule"
-  target     = google_compute_target_http_proxy.http[0].self_link
-  ip_address = google_compute_global_address.default.address
+  target     = google_compute_target_http_proxy.http.self_link
+  ip_address = google_compute_global_address.global_address.address
   port_range = "80"
 
-  depends_on = [google_compute_global_address.default]
+  depends_on = [google_compute_global_address.global_address]
 
   labels = var.custom_labels
 }
