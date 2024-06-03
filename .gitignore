@@ -7,3 +7,4 @@
 *.json
 *.terraform.lock*
 *.tflint.hcl
+**/.vscode/*
