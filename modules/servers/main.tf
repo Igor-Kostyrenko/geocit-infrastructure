@@ -134,7 +134,7 @@ resource "google_compute_health_check" "default" {
   name    = "${var.name}-hc"
 
   http_health_check {
-    port         = 8080
+    port         = 80
   }
 
   check_interval_sec = 30
@@ -165,7 +165,7 @@ resource "google_compute_instance_group_manager" "api" {
 
   named_port {
     name = "http"
-    port = 80
+    port = 8080
   }
 
   auto_healing_policies {
