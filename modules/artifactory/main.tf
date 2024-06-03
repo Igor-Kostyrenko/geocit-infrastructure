@@ -1,15 +1,22 @@
+provider "google" {
+  project = var.project
+  region  = var.region
+  zone    = var.zone
+  credentials = file("credentials.json")
+}
+
+resource "google_compute_network" "artifactory_network" {
+  name = "artifactory-network"
+}
+
 resource "google_compute_address" "artifactory_ip" {
   name   = "artifactory-ip"
   region = var.region
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "google_compute_instance" "artifactory" {
   name         = "artifactory-vm"
-  machine_type = var.machine_type
+  machine_type = "e2-medium"
   zone         = var.zone
 
   boot_disk {
@@ -19,38 +26,23 @@ resource "google_compute_instance" "artifactory" {
   }
 
   network_interface {
-    network = "default"
+    network = google_compute_network.artifactory_network.self_link
     access_config {
       nat_ip = google_compute_address.artifactory_ip.address
     }
   }
 
-  metadata_start_jfrog = file("${path.module}/start_jfrog.sh")
-
   tags = ["artifactory"]
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "google_compute_firewall" "artifactory_firewall" {
   name          = "artifactory-firewall"
-  network       = "default"
+  network       = google_compute_network.artifactory_network.self_link
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["artifactory"]
   allow {
     protocol = "tcp"
-    ports    = ["8081", "8082"]
-  }
-}
-
-resource "google_storage_bucket" "artifactory_bucket" {
-  name     = var.bucket_name
-  location = var.region
-
-  lifecycle {
-    prevent_destroy = true
+    ports    = ["22", "8081", "8082"]
   }
 }
 
