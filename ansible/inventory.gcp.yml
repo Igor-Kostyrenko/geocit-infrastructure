@@ -1,0 +1,8 @@
+plugin: gcp_compute
+projects:
+  - $GCP_PROJECT
+auth_kind: serviceaccount
+service_account_file: $GCP_SERVICE_ACCOUNT_FILE
+groups:
+  servers: "'app' in name"
+  grafana: "'monitoring' in name"
