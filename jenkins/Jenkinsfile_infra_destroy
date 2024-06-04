@@ -4,13 +4,6 @@ pipeline {
         terraform 'terraform'
     }
     stages {
-        stage('Checkout') {
-            steps {
-                script {
-                    git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit-infrastructure.git'
-                }
-            }
-        }
         stage('Init') {
             steps {
                 withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
