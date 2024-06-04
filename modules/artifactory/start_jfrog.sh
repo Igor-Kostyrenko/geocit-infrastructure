@@ -1,14 +1,14 @@
 #!/bin/bash
 
 export JFROG_HOME=/opt/jfrog
-sudo mkdir -p \$JFROG_HOME
-sudo chown -R \$(whoami):\$(whoami) \$JFROG_HOME
+sudo mkdir -p $JFROG_HOME
+sudo chown -R $(whoami):$(whoami) $JFROG_HOME
        
 mkdir -p $JFROG_HOME/artifactory/var/etc/
 cd $JFROG_HOME/artifactory/var/etc/
-touch ./system.yaml
-chown -R 1030:1030 $JFROG_HOME/artifactory/var
-chmod -R 777 $JFROG_HOME/artifactory/var
+sudo touch ./system.yaml
+sudo chown -R 1030:1030 $JFROG_HOME/artifactory/var
+sudo chmod -R 777 $JFROG_HOME/artifactory/var
 
 sudo apt-get update
 sudo apt-get install -y \
@@ -30,4 +30,4 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 sudo systemctl start docker
 sudo systemctl enable docker
 
-sudo docker run --name artifactory -v $JFROG_HOME/artifactory/var/:/var/opt/jfrog/artifactory -d -p 8081:8081 -p 8082:8082 releases-docker.jfrog.io/jfrog/artifactory-oss:latest
+sudo docker run --name artifactory -v $JFROG_HOME/artifactory/var/:/var/opt/jfrog/artifactory -d -p 8081:8081 -p 8082:8082 releases-docker.jfrog.io/jfrog/artifactory-oss:7.77.5
