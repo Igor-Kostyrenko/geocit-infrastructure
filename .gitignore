@@ -4,7 +4,6 @@
 # .tfstate files
 *.tfstate
 *.tfstate.*
-*.json
 *.terraform.lock*
 *.tflint.hcl
 **/.vscode/*
