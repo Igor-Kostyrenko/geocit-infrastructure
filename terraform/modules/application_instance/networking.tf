@@ -45,6 +45,7 @@ resource "google_compute_global_forwarding_rule" "http-redirect" {
   ip_address = google_compute_global_address.global_address.address
   port_range = "80"
 }
+
 resource "google_compute_global_forwarding_rule" "https" {
   name       = "${var.env}-${var.region}-https-rule"
   target     = google_compute_target_https_proxy.https.self_link
@@ -53,11 +54,11 @@ resource "google_compute_global_forwarding_rule" "https" {
   depends_on = [google_compute_global_address.global_address]
   labels = var.custom_labels
 }
+
 resource "google_compute_target_https_proxy" "https" {
   name    = "${var.env}-${var.region}-https-proxy"
   url_map = google_compute_url_map.urlmap.id
   ssl_certificates = [
     data.google_compute_ssl_certificate.lb_ssl.self_link
   ]
-
 }

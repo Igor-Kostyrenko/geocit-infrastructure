@@ -28,6 +28,4 @@ variable "image" {
 variable "project" {
   type        = string
   description = "id of project"
-  default     = "capybarageocity"
-
 }
