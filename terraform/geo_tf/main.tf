@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "${var.env}-${var.region}-geo-tf-state"
+    bucket = "${var.env}-${var.region}-state-bucket"
     prefix = "terraform/state"
   }
   required_version = "= 1.8.4"

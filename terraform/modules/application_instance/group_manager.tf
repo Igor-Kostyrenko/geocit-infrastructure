@@ -13,7 +13,7 @@ resource "google_compute_instance_group_manager" "api" {
 
   named_port {
     name = "http"
-    port = 80
+    port = 8080
   }
 
   auto_healing_policies {
