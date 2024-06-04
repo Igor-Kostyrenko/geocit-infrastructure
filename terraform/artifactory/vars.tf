@@ -15,3 +15,8 @@ variable "zone" {
   type        = string
   default     = "europe-west3-c"
 }
+
+variable "env" {
+  description = "Environment to deploy"
+  type        = string
+}
