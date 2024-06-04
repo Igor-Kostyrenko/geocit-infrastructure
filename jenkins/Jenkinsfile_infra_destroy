@@ -7,8 +7,9 @@ pipeline {
         stage('Init') {
             steps {
                 withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-                    sh 'cd terraform'
-                    sh 'terraform init -no-color'
+			        dir('terraform/geo_tf') {
+			            sh 'make init'
+			        }
                 }
             }
         }
@@ -19,7 +20,9 @@ pipeline {
             }
             steps {
                 withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-                    sh 'terraform destroy -auto-approve -no-color'
+                    dir('terraform/geo_tf') {
+			            sh 'make destroy'
+			        }
                 }
             }
        	}
