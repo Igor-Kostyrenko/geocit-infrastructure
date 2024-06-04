@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') { 
             steps {
-                git branch: 'jira-51-configure-ansible-for-the-application', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
+                git branch: 'main', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
             }
         }
         stage('Deploy') {
