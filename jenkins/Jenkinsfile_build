@@ -102,7 +102,7 @@ pipeline {
             steps {
                 script {
                     def hash = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    def buildName = "${params.ENV}-${params.BUILDNAME}-${hash}"
+                    def buildName = "${params.ENV}-${params.BUILDNAME}-$BUILD_NUMBER-${hash}"
 
                     def repo = ""
                     if (params.ENV == 'DEV') {
