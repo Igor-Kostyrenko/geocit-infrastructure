@@ -7,7 +7,8 @@ pipeline {
         stage('Init and Plan'){
 			steps {
 			    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-			        sh 'terraform init -no-color'
+			        sh 'cd terraform'
+					sh 'terraform init -no-color'
 				    sh 'terraform plan -out=tfplan -no-color '
 			    }
 			}

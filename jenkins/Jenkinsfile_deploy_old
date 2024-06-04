@@ -1,0 +1,111 @@
+pipeline {
+    agent any
+    tools {
+        maven "M3"
+    }
+    stages {
+        stage('git checkout') {
+            steps {
+                script {
+                    git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
+                }
+            }
+        }
+        stage('Get Database Credentials') {
+    steps {
+        script {
+            def projectId = '777161514072'
+            def secretName = 'database-credentials'
+            def version = '1'
+
+            def secretValue = sh(
+                script: "gcloud secrets versions access ${version} --secret=${secretName} --project=${projectId}",
+                returnStdout: true
+            ).trim()
+
+            env.passwordBD = secretValue
+        }
+    }
+}
+
+        stage('Check IP') {
+            steps {
+                withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                    script {
+                        
+                        def postgresIP = sh(script: 'gcloud sql instances describe postgres-db --format=json | jq -r \'{name: .name, ip: .ipAddresses[0].ipAddress}\'', returnStdout: true).trim()
+                        def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
+                
+                        def postgresData = readJSON text: postgresIP
+                        def postgresIPAddress = postgresData.ip
+
+                        def externalData = readJSON text: externalIP
+                        def externalIPAddress = externalData.ip
+
+                        env.externalIP = externalIPAddress
+                        env.postgresIP = postgresIPAddress
+                        sh "echo small fix"
+                    }
+                }
+            }
+        }
+        stage('Configure') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'env', variable: 'CREDENTIALS_FILE')]) {
+                        def json = readJSON file: "${CREDENTIALS_FILE}"
+                        
+                        def appProp = "src/main/resources/application.properties"
+                        def app_js = "src/main/webapp/static/js/app.*.js"
+                        def ip = env.externalIP
+                        def ip_db = env.postgresIP
+                        
+                        sh "sed -i 's/localhost:8080/$ip:8080/g' $appProp"
+                        sh "sed -i 's/localhost:5432/$ip_db:5432/g' $appProp"
+                        sh "sed -i 's/localhost/$ip/g' $app_js"
+                        
+                        sh "sed -i 's|^db.username=.*|db.username=${json.db.username}|' ${appProp}"
+                        sh "sed -i 's|^db.password=.*|db.password=${env.passwordBD}|' ${appProp}"
+                        sh "sed -i 's|^username=.*|username=${json.username}|' ${appProp}"
+                        sh "sed -i 's|^password=.*|password=${env.passwordBD}|' ${appProp}"
+                        sh "sed -i 's|^email.username=.*|email.username=${json.email.username}|' ${appProp}"
+                        sh "sed -i 's|^email.password=.*|email.password=${json.email.password}|' ${appProp}"
+                        sh "sed -i 's|^map.key=.*|map.key=${json.map.key}|' ${appProp}"
+                    }
+                }
+            }
+        }
+        stage('Build Back-end') {
+            steps {
+                sh "mvn clean package -Dmaven.test.skip=true"
+            }
+        }
+        stage('Test Back-end') {
+            steps {
+                sh "mvn test"
+            }
+        }
+         stage('Deploy') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                            def getIP = sh(script: 'gcloud compute instances list --format=json | jq \'.[] | select(.name|startswith("app")) | .networkInterfaces[0].networkIP\'', returnStdout: true).trim()
+                            echo "Instance IP: ${getIP}"
+                            getIP.split('\n').each { ip ->
+                                echo "Transferring to instance: ${ip}"
+                                sshagent(credentials : ['ansible']) {
+                                   sh "scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/Deploy/target/citizen.war ansible@${ip}:/tmp/citizen.war"
+                                   sh "ssh -o StrictHostKeyChecking=no ansible@${ip} 'sudo mv /tmp/citizen.war /usr/share/tomcat/webapps/citizen.war && sudo chown -R tomcat:tomcat /usr/share/tomcat/'"                                
+                                }
+                            }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
