@@ -10,9 +10,6 @@ resource "google_secret_manager_secret" "database_credentials" {
       replicas {
         location = var.region
       }
-      replicas {
-        location = "europe-west1"
-      }
     }
   }
 }
