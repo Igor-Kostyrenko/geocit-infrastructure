@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "capybaratfstat"
+    bucket = "${var.env}-${var.region}-state-bucket"
     prefix = "terraform/state"
   }
   required_version = "= 1.8.4"
