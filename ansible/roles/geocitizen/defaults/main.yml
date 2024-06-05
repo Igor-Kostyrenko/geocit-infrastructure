@@ -44,3 +44,4 @@ jfrog_repo: $JFROG_REPO
 jfrog_env: $JFROG_ENV
 jfrog_build_number: $JFROG_BUILD_NUMBER
 jfrog_hash: $JFROG_HASH
+jfrog_api_key: $JFROG_API_KEY
