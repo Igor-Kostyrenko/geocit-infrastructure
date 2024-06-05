@@ -133,13 +133,14 @@
 - name: Download application build using Artifactory API KEY
   get_url:
     url: "http://{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war"
-    dest: /opt/tomcat/webapps/
+    dest: "/opt/tomcat/webapps/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war"
+    follow_redirects: yes
     headers:
       X-JFrog-Art-Api: "{{ jfrog_api_key }}"
 
 - name: Change file ownership
   ansible.builtin.file:
-    path: /opt/tomcat/webapps/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war
+    path: "/opt/tomcat/webapps/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war"
     owner: tomcat
 
 - name: Restart tomcat service
