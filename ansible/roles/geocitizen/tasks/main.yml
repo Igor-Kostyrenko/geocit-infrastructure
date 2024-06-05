@@ -132,9 +132,9 @@
     
 - name: Download application build using Artifactory API KEY
   get_url:
-    url: '{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war'
+    url: "{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war"
     dest: /opt/tomcat/webapps/
-    headers: 'X-JFrog-Art-Api:{{ lookup('ansible.builtin.env', 'JFROG_API_KEY') }}'
+    headers: "X-JFrog-Art-Api:{{ lookup('ansible.builtin.env', 'JFROG_API_KEY') }}"
 
 - name: Change file ownership
   ansible.builtin.file:
