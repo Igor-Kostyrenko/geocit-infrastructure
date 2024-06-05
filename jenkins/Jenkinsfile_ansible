@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'ENV', choices: ['DEV', 'STAGE', 'PROD'], description: 'Deployment environment')
+        string(name: 'JFROG_PORT', defaultValue: '8081', description: 'Jfrog host port')
+        string(name: 'JFROG_REPO', defaultValue: 'geocit-dev-maven-local', description: 'Jfrog repository name')
+        string(name: 'JFROG_BUILD_NUMBER', defaultValue: '16', description: 'Application build number')
+        string(name: 'JFROG_HASH', defaultValue: 'be44ac1', description: 'Application build hash')
+    }
+    stages {
+        stage('Checkout') { 
+            steps {
+                git branch: 'jira-61-improve-ansible-playbook-for-jfrog-artifact-deployment', url: "git@github.com:CapybaraDevOps/geocit-infrastructure.git", credentialsId: 'gitcreds'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                dir('ansible/roles') {
+                    withCredentials([string(credentialsId: 'discord-webhook', variable: 'WEBHOOK_URL')]) {
+                        script {
+                            env.DISCORD_WEBHOOK_URL = '$WEBHOOK_URL'
+                        }
+                    }
+                    withCredentials([string(credentialsId: 'jfrog-api-key', variable: 'JFROG_API_KEY')]) {
+                        script {
+                            env.JFROG_API_KEY = '$JFROG_API_KEY'
+                        }
+                    }
+                    withCredentials([file(credentialsId: 'google_secret_file', variable: 'GCP_SERVICE_ACCOUNT_FILE')]) {
+                        script {
+                            //GCP env
+                            env.GCP_PROJECT = "capybarageocity"
+                            env.GCP_ZONE = "europe-west3-c"
+                            env.GCP_FILE = '/var/lib/jenkins/application_default_credentials.json'
+                            env.MONITORING_IP = sh(script: "gcloud compute instances list --format=json | jq '.[] | select(.name|contains(\"monitoring\")) | .networkInterfaces[].networkIP'", returnStdout: true).trim()
+                            //Jfrog env
+                            env.JFROG_HOST = sh(script: "gcloud compute instances list --format=json | jq '.[] | select(.name|contains(\"artifactory\")) | .networkInterfaces[].networkIP'", returnStdout: true).trim()
+                            env.JFROG_PORT = params.JFROG_PORT
+                            env.JFROG_REPO = params.JFROG_REPO
+                            env.JFROG_ENV = params.ENV
+                            env.JFROG_BUILD_NUMBER = params.JFROG_BUILD_NUMBER
+                            env.JFROG_HASH = params.JFROG_HASH
+                            //Ansible defaults file mapping
+                            sh 'envsubst < geocitizen/defaults/main.yml | tee geocitizen/defaults/main_temp.yml'
+                            sh 'mv geocitizen/defaults/main_temp.yml geocitizen/defaults/main.yml'
+                            //Targets file mapping
+                            sh 'envsubst < deploy_promgrafnode/files/prometheus.yml | tee deploy_promgrafnode/files/prometheus_temp.yml'
+                            sh 'mv deploy_promgrafnode/files/prometheus_temp.yml deploy_promgrafnode/files/prometheus.yml'
+                            //.env mapping
+                            sh 'envsubst < deploy_promgrafnode/files/.env | tee deploy_promgrafnode/files/.env_temp'
+                            sh 'mv deploy_promgrafnode/files/.env_temp deploy_promgrafnode/files/.env'
+                            //Docker Compose mapping
+                            sh 'envsubst < deploy_promgrafnode/files/docker-compose-vm2.yml | tee deploy_promgrafnode/files/docker-compose-vm2.yml_temp'
+                            sh 'mv deploy_promgrafnode/files/docker-compose-vm2.yml_temp deploy_promgrafnode/files/docker-compose-vm2.yml'
+                            //Inventory mapping
+                            sh 'envsubst < ../inventory.gcp.yml | tee ../inventory_temp.gcp.yml'
+                            sh 'mv ../inventory_temp.gcp.yml ../inventory.gcp.yml'
+                        }
+                        //Pass credentials to monitoring node
+                        sshagent(credentials : ['ansible']) {
+                            sh "ssh -o StrictHostKeyChecking=no ansible@${env.MONITORING_IP} \"mkdir -p .config/gcloud/\""
+                            sh "scp -o StrictHostKeyChecking=no ${GCP_FILE} ansible@${env.MONITORING_IP}:~/.config/gcloud/application_default_credentials.json"
+                        }
+                        ansiblePlaybook playbook: '../geocitizen-playbook.yml', inventory: '../inventory.gcp.yml', credentialsId: 'ansible', extras: '--ssh-extra-args="-o StrictHostKeyChecking=no"'
+                    }
+                }
+            }
+        }
+    }
+}
