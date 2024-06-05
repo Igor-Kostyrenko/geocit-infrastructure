@@ -34,7 +34,7 @@ pipeline {
                             env.GCP_FILE = '/var/lib/jenkins/application_default_credentials.json'
                             env.MONITORING_IP = sh(script: "gcloud compute instances list --format=json | jq '.[] | select(.name|contains(\"monitoring\")) | .networkInterfaces[].networkIP'", returnStdout: true).trim()
                             //Jfrog env
-                            env.JFROG_HOST = sh(script: "gcloud compute instances list --format=json | jq '.[] | select(.name|contains(\"artifactory\")) | .networkInterfaces[].networkIP'", returnStdout: true).trim()
+                            env.JFROG_HOST = sh(script: "gcloud compute instances list --format=json | jq '.[] | select(.name|contains(\"artifactory\")) | .networkInterfaces[].accessConfigs[].natIP'", returnStdout: true).trim()
                             env.JFROG_PORT = params.JFROG_PORT
                             env.JFROG_REPO = params.JFROG_REPO
                             env.JFROG_ENV = params.ENV
