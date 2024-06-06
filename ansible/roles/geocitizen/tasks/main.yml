@@ -136,6 +136,7 @@
 - name: Change file ownership
   ansible.builtin.file:
     path: "/usr/share/tomcat/webapps/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war"
+    mode: '0755'
     owner: tomcat
     group: tomcat
 
