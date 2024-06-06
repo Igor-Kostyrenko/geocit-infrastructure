@@ -131,4 +131,16 @@
     enabled: yes
     
 - name: Download application build using Artifactory API KEY
-  shell: curl -H "X-JFrog-Art-Api:{{ jfrog_api_key }}" http://{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war -o /usr/share/tomcat/webapps/citizen.war
+  shell: curl -H "X-JFrog-Art-Api:{{ jfrog_api_key }}" http://{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war -o /usr/share/tomcat/citizen.war
+
+- name: Change file ownership
+  ansible.builtin.file:
+    path: "/usr/share/tomcat/citizen.war"
+    owner: tomcat
+    group: tomcat
+
+- name: Move build
+  shell: mv /usr/share/tomcat/citizen.war /usr/share/tomcat/webapps/citizen.war
+
+- name: Restart tomcat service
+  shell: sudo systemctl restart tomcat
