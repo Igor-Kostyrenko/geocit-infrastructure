@@ -131,7 +131,7 @@
     enabled: yes
     
 - name: Download application build using Artifactory API KEY
-  shell: "curl -H \"X-JFrog-Art-Api: {{ jfrog_api_key }}\" -o /usr/share/tomcat/webapps/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war http://{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war"
+  shell: 'curl -H "X-JFrog-Art-Api:{{ jfrog_api_key }}" http://{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war -O /usr/share/tomcat/webapps/'
 
 - name: Change file ownership
   ansible.builtin.file:
