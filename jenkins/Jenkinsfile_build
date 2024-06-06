@@ -42,7 +42,7 @@ pipeline {
                 withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
                     script {
                         
-                        def postgresIP = sh(script: 'gcloud sql instances describe prod-europe-west3-postgres-db --format=json | jq -r \'{name: .name, ip: .ipAddresses[0].ipAddress}\'', returnStdout: true).trim()
+                        def postgresIP = sh(script: 'gcloud sql instances describe dev-01-europe-west3-postgres-db --format=json | jq -r \'{name: .name, ip: .ipAddresses[0].ipAddress}\'', returnStdout: true).trim()
                         def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
                 
                         def postgresData = readJSON text: postgresIP
