@@ -32,10 +32,10 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
                     script {
-                        
+
                         def postgresIP = sh(script: 'gcloud sql instances describe postgres-db --format=json | jq -r \'{name: .name, ip: .ipAddresses[0].ipAddress}\'', returnStdout: true).trim()
                         def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
-                
+
                         def postgresData = readJSON text: postgresIP
                         def postgresIPAddress = postgresData.ip
 
@@ -54,16 +54,16 @@ pipeline {
                 script {
                     withCredentials([file(credentialsId: 'env', variable: 'CREDENTIALS_FILE')]) {
                         def json = readJSON file: "${CREDENTIALS_FILE}"
-                        
+
                         def appProp = "src/main/resources/application.properties"
                         def app_js = "src/main/webapp/static/js/app.*.js"
                         def ip = env.externalIP
                         def ip_db = env.postgresIP
-                        
+
                         sh "sed -i 's/localhost:8080/$ip:8080/g' $appProp"
                         sh "sed -i 's/localhost:5432/$ip_db:5432/g' $appProp"
                         sh "sed -i 's/localhost/$ip/g' $app_js"
-                        
+
                         sh "sed -i 's|^db.username=.*|db.username=${json.db.username}|' ${appProp}"
                         sh "sed -i 's|^db.password=.*|db.password=${env.passwordBD}|' ${appProp}"
                         sh "sed -i 's|^username=.*|username=${json.username}|' ${appProp}"
@@ -95,7 +95,7 @@ pipeline {
                                 echo "Transferring to instance: ${ip}"
                                 sshagent(credentials : ['ansible']) {
                                    sh "scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/Deploy/target/citizen.war ansible@${ip}:/tmp/citizen.war"
-                                   sh "ssh -o StrictHostKeyChecking=no ansible@${ip} 'sudo mv /tmp/citizen.war /usr/share/tomcat/webapps/citizen.war && sudo chown -R tomcat:tomcat /usr/share/tomcat/'"                                
+                                   sh "ssh -o StrictHostKeyChecking=no ansible@${ip} 'sudo mv /tmp/citizen.war /usr/share/tomcat/webapps/citizen.war && sudo chown -R tomcat:tomcat /usr/share/tomcat/'"
                                 }
                             }
                     }
