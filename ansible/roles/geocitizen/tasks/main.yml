@@ -133,6 +133,9 @@
 - name: Download application build using Artifactory API KEY
   shell: curl -H "X-JFrog-Art-Api:{{ jfrog_api_key }}" http://{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war -o /usr/share/tomcat/webapps/
 
+- name: Rename application file
+  shell: mv /usr/share/tomcat/webapps/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war /usr/share/tomcat/webapps/citizen.war
+
 - name: Change file ownership
   ansible.builtin.file:
     path: "/usr/share/tomcat/webapps/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war"
