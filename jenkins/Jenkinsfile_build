@@ -25,7 +25,7 @@ pipeline {
             steps {
                 script {
                     def projectId = '777161514072'
-                    def secretName = 'prod-europe-west3-geo-database-credentials'
+                    def secretName = 'dev-01-europe-west3-geo-database-credentials'
                     def version = '1'
 
                     def secretValue = sh(
