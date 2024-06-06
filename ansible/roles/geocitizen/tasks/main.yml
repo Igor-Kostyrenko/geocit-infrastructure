@@ -140,8 +140,4 @@
     group: tomcat
 
 - name: Restart tomcat service
-  service:
-    daemon_reload: yes
-    name: tomcat
-    state: restarted
-    enabled: yes
+  shell: sudo systemctl restart tomcat
