@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit-infrastructure.git'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
