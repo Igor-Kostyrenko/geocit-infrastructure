@@ -21,42 +21,39 @@ pipeline {
                     }
                 }
         }
-        stage('Get Database Credentials') {
-            steps {
+         stage('Get Database Credentials') {
+     steps {
                 script {
-                    def projectId = '777161514072'
-                    def secretName = 'dev-01-europe-west3-geo-database-credentials'
-                    def version = '1'
+                    def projectId = sh(script: "gcloud config get-value project", returnStdout: true).trim()
+                    def secretName = sh(script: "gcloud secrets list --format='value(name)'", returnStdout: true).trim()
 
-                    def secretValue = sh(
-                        script: "gcloud secrets versions access ${version} --secret=${secretName} --project=${projectId}",
-                        returnStdout: true
-                    ).trim()
-                    
-                    env.passwordBD = secretValue
+                    def dbPassword = sh(script: "gcloud secrets versions access latest --secret=${secretName} --project=${projectId}", returnStdout: true).trim()
+                    env.passwordBD = dbPassword
+                    env.idProject = projectId
                 }
             }
         }
         stage('Check IP') {
-            steps {
-                withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
-                    script {
-                        
-                        def postgresIP = sh(script: 'gcloud sql instances describe dev-01-europe-west3-postgres-db --format=json | jq -r \'{name: .name, ip: .ipAddresses[0].ipAddress}\'', returnStdout: true).trim()
-                        def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
-                
-                        def postgresData = readJSON text: postgresIP
-                        def postgresIPAddress = postgresData.ip
+        steps {
+            withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                script {
+                    def instanceName = sh(script: "gcloud sql instances list --format=\"value(NAME)\" --project=${env.idProject}", returnStdout: true).trim()
+                    def postgresIP = sh(script: "gcloud sql instances describe ${instanceName} --format=json | jq -r '{name: .name, ip: .ipAddresses[0].ipAddress}'", returnStdout: true).trim()
+                    def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
 
-                        def externalData = readJSON text: externalIP
-                        def externalIPAddress = externalData.ip
+                    def postgresData = readJSON text: postgresIP
+                    def postgresIPAddress = postgresData.ip
 
-                        env.externalIP = externalIPAddress
-                        env.postgresIP = postgresIPAddress
-                    }
+                    def externalData = readJSON text: externalIP
+                    def externalIPAddress = externalData.ip
+
+                    env.externalIP = externalIPAddress
+                    env.postgresIP = postgresIPAddress
+                    sh "echo small fix"
                 }
             }
         }
+    }
         stage('Configure') {
             steps {
                 script {
@@ -83,7 +80,6 @@ pipeline {
                         sh "sed -i 's|^email.username=.*|email.username=${json.email.username}|' ${appProp}"
                         sh "sed -i 's|^email.password=.*|email.password=${json.email.password}|' ${appProp}"
                         sh "sed -i 's|^map.key=.*|map.key=${json.map.key}|' ${appProp}"
-                        sh "cat ${appProp}"
                     }
                 }
             }
