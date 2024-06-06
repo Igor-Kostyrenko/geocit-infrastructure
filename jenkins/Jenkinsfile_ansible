@@ -18,14 +18,12 @@ pipeline {
                 dir('ansible/roles') {
                     withCredentials([string(credentialsId: 'discord-webhook', variable: 'WEBHOOK_URL')]) {
                         script {
-                            env.DISCORD_WEBHOOK_URL = '$WEBHOOK_URL'
-                            sh "echo ${env.DISCORD_WEBHOOK_URL}"
+                            env.DISCORD_WEBHOOK_URL = "${WEBHOOK_URL}"
                         }
                     }
                     withCredentials([string(credentialsId: 'jfrog-api-key', variable: 'JFROG_API_KEY')]) {
                         script {
-                            env.JFROG_API_KEY = '$JFROG_API_KEY'
-                            sh "echo ${env.JFROG_API_KEY}"
+                            env.JFROG_API_KEY = "${JFROG_API_KEY}"
                         }
                     }
                     withCredentials([file(credentialsId: 'google_secret_file', variable: 'GCP_SERVICE_ACCOUNT_FILE')]) {
