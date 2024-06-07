@@ -136,6 +136,7 @@
 - name: Change file ownership
   ansible.builtin.file:
     path: "/usr/share/tomcat/citizen.war"
+    mode: '0755'
     owner: tomcat
     group: tomcat
 
