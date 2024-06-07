@@ -16,10 +16,11 @@ pipeline {
 				script {
                     def environmentGEO = "${params.ENV}-${params.ENV_VARIABLE}-${params.REGION}-${params.ZONE}-${params.PROJECT_NAME}"
                     echo "Selected environment GEO: ${environmentGEO}"
+					env.GEO_ENV = environmentGEO
                 }
 			    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
 			        dir('terraform/geo_tf') {
-						env.GEO_ENV = ${environmentGEO}
+					
 			            sh 'make plan'
 			        }
 			    }
