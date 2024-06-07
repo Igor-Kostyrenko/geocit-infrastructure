@@ -3,7 +3,11 @@ resource "google_compute_instance" "grafana" {
   machine_type = var.machine_type
   zone         = var.zone
   tags         = ["grafana"]
-
+  allow_stopping_for_update = true
+  service_account {
+    email  = "jenkins@capybarageocity.iam.gserviceaccount.com"
+    scopes = ["cloud-platform"]
+  }
   boot_disk {
     initialize_params {
       image = var.image
