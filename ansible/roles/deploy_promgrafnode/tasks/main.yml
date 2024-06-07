@@ -146,5 +146,5 @@
   become_user: ansible
 
 - name: Run Docker Compose
-  shell: docker compose -f {{ destin_folder }}/docker-compose.yml up -d
+  shell: sudo docker compose -f {{ destin_folder }}/docker-compose.yml up -d
   become_user: ansible
