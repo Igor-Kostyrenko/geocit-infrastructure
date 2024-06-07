@@ -6,8 +6,8 @@ pipeline {
 	parameters {
         choice(name: 'ENV', choices: ['dev', 'stage', 'prod'], description: 'Deployment environment')
 		string(name: 'ENV_VARIABLE', defaultValue: '01', description: 'ENV Variable')
-		choice(name: 'REGION', choices: ['eu'], description: 'Select the region')
-        choice(name: 'ZONE', choices: ['west-3'], description: 'Select the zone')
+		choice(name: 'REGION', choices: ['europe'], description: 'Select the region')
+        choice(name: 'ZONE', choices: ['west3'], description: 'Select the zone')
         string(name: 'PROJECT_NAME', defaultValue: 'geo', description: 'Project name')
     }
     stages {
