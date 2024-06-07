@@ -1,7 +1,7 @@
 GEO_ENV?=dev-01-europe-west3-geo
 
 init:
-	sed -i 's|GEO_ENV|$(GEO_ENV)|g' backend.conf
+	sed -i '' 's|GEO_ENV|$(GEO_ENV)|g' backend.conf
 	terraform init -backend-config=backend.conf -no-color
 	terraform workspace select -or-create ${GEO_ENV}
 
