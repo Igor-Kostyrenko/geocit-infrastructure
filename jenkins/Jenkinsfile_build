@@ -1,0 +1,123 @@
+pipeline {
+    agent any
+    tools {
+        maven "M3"
+		jfrog 'jfrog-cli'
+	}
+    parameters {
+        choice(name: 'ENV', choices: ['DEV', 'STAGE', 'PROD'], description: 'Deployment environment')
+        string(name: 'BUILDNAME', defaultValue: 'citizen', description: 'Build Name')
+    }
+    environment {
+        GOOGLE_CREDENTIALS = credentials('terraform_creds')
+        CREDENTIALS_FILE = credentials('env')
+    }
+    stages {
+    
+        stage('git checkout') {
+                steps {
+                    script {
+                        git branch: 'main', credentialsId: 'gitcreds', url: 'git@github.com:CapybaraDevOps/geocit.git'
+                    }
+                }
+        }
+         stage('Get Database Credentials') {
+     steps {
+                script {
+                    def projectId = sh(script: "gcloud config get-value project", returnStdout: true).trim()
+                    def secretName = sh(script: "gcloud secrets list --format='value(name)'", returnStdout: true).trim()
+
+                    def dbPassword = sh(script: "gcloud secrets versions access latest --secret=${secretName} --project=${projectId}", returnStdout: true).trim()
+                    env.passwordBD = dbPassword
+                    env.idProject = projectId
+                }
+            }
+        }
+        stage('Check IP') {
+        steps {
+            withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
+                script {
+                    def instanceName = sh(script: "gcloud sql instances list --format=\"value(NAME)\" --project=${env.idProject}", returnStdout: true).trim()
+                    def postgresIP = sh(script: "gcloud sql instances describe ${instanceName} --format=json | jq -r '{name: .name, ip: .ipAddresses[0].ipAddress}'", returnStdout: true).trim()
+                    def externalIP = sh(script: 'gcloud compute forwarding-rules list --format=json | jq \'.[] | {name: .name, ip: .IPAddress}\'', returnStdout: true).trim()
+
+                    def postgresData = readJSON text: postgresIP
+                    def postgresIPAddress = postgresData.ip
+
+                    def externalData = readJSON text: externalIP
+                    def externalIPAddress = externalData.ip
+
+                    env.externalIP = externalIPAddress
+                    env.postgresIP = postgresIPAddress
+                    sh "echo small fix"
+                }
+            }
+        }
+    }
+        stage('Configure') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'env', variable: 'CREDENTIALS_FILE')]) {
+                        def json = readJSON file: "${CREDENTIALS_FILE}"
+                        
+                        def appProp = "src/main/resources/application.properties"
+                        def app_js = "src/main/webapp/static/js/app.*.js"
+                        def ip = env.externalIP
+                        def ip_db = env.postgresIP
+
+                        def escapedPassword = sh(script: "printf '%s\n' '${env.passwordBD}' | sed -e 's/[\\/&]/\\\\&/g'", returnStdout: true).trim()
+    
+                        sh "sed -i 's|http://localhost:8080|https://capybara.pp.ua|g' $appProp"
+                        sh "sed -i 's|localhost:5432|$ip_db:5432|g' $appProp"
+                        sh "sed -i 's|http://localhost:8080|https://capybara.pp.ua|g' $app_js"
+                        
+                        sh "sed -i 's|^db.username=.*|db.username=${json.db.username}|' ${appProp}"
+                        sh "sed -i 's|^db.password=.*|db.password=${escapedPassword}|' ${appProp}"
+                        
+                        sh "sed -i 's|^username=.*|username=${json.username}|' ${appProp}"
+                        sh "sed -i 's|^password=.*|password=${escapedPassword}|' ${appProp}"
+                        
+                        sh "sed -i 's|^email.username=.*|email.username=${json.email.username}|' ${appProp}"
+                        sh "sed -i 's|^email.password=.*|email.password=${json.email.password}|' ${appProp}"
+                        sh "sed -i 's|^map.key=.*|map.key=${json.map.key}|' ${appProp}"
+                    }
+                }
+            }
+        }
+        stage('Build Back-end') {
+            steps {
+                sh "mvn clean package -Dmaven.test.skip=true"
+            }
+        }
+        stage('Test Back-end') {
+            steps {
+                sh "mvn test"
+            }
+        }
+        stage('Artifactory') {
+            steps {
+                script {
+                    def hash = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    def buildName = "${params.ENV}-${params.BUILDNAME}-$BUILD_NUMBER-${hash}"
+
+                    def repo = ""
+                    if (params.ENV == 'DEV') {
+                        repo = 'geocit-dev-maven-local'
+                    } else if (params.ENV == 'STAGE') {
+                        repo = 'geocit-stage-maven-local'
+                    } else if (params.ENV == 'PROD') {
+                        repo = 'geocit-prod-maven-local'
+                    }
+
+                    jf "rt u /var/lib/jenkins/workspace/${env.JOB_NAME}/target/citizen.war ${repo}/${buildName}.war"
+                    jf "rt bp"
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

@@ -22,8 +22,8 @@ resource "google_sql_database" "ss_demo_1" {
   instance = google_sql_database_instance.main.name
 }
 
-resource "google_sql_user" "root" {
-  name       = "root"
+resource "google_sql_user" "postgres" {
+  name       = "postgres"
   instance   = google_sql_database_instance.main.name
   password   = google_secret_manager_secret_version.db_password_version.secret_data
   depends_on = [google_secret_manager_secret_version.db_password_version]

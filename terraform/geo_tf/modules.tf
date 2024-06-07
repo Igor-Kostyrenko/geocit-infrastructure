@@ -16,4 +16,5 @@ module "application_instance" {
 
 module "monitoring" {
   source = "../modules/monitoring"
+  project = var.project
 }
