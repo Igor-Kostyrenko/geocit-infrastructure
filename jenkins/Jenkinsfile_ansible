@@ -58,6 +58,7 @@ pipeline {
                         }
                         //Pass credentials to monitoring node
                         sshagent(credentials : ['ansible']) {
+                            sh "ssh-keygen -f \"/var/lib/jenkins/.ssh/known_hosts\" -R \"${env.MONITORING_IP}\""
                             sh "ssh -o StrictHostKeyChecking=no ansible@${env.MONITORING_IP} \"mkdir -p .config/gcloud/\""
                             sh "scp -o StrictHostKeyChecking=no ${GCP_FILE} ansible@${env.MONITORING_IP}:~/.config/gcloud/application_default_credentials.json"
                         }
