@@ -3,11 +3,24 @@ pipeline {
 	tools {
       terraform 'terraform'
     }
+	parameters {
+        choice(name: 'ENV', choices: ['dev', 'stage', 'prod'], description: 'Deployment environment')
+		string(name: 'ENV_VARIABLE', defaultValue: '01', description: 'ENV Variable')
+		choice(name: 'REGION', choices: ['europe'], description: 'Select the region')
+        choice(name: 'ZONE', choices: ['west3'], description: 'Select the zone')
+        string(name: 'PROJECT_NAME', defaultValue: 'geo', description: 'Project name')
+    }
     stages {
         stage('Init and Plan'){
 			steps {
+				script {
+                    def environmentGEO = "${params.ENV}-${params.ENV_VARIABLE}-${params.REGION}-${params.ZONE}-${params.PROJECT_NAME}"
+                    echo "Selected environment GEO: ${environmentGEO}"
+					env.GEO_ENV = environmentGEO
+                }
 			    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
 			        dir('terraform/geo_tf') {
+					
 			            sh 'make plan'
 			        }
 			    }
