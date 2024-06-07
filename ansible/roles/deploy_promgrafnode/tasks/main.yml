@@ -143,8 +143,12 @@
 
 - name: Docker Compose Down
   shell: docker compose -f {{ destin_folder }}/docker-compose.yml down
+  become: true
   become_user: ansible
+  become_method: sudo
 
 - name: Run Docker Compose
   shell: docker compose -f {{ destin_folder }}/docker-compose.yml up -d
+  become: true
   become_user: ansible
+  become_method: sudo
