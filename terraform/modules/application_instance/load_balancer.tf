@@ -4,6 +4,7 @@ resource "google_compute_backend_service" "api" {
   protocol    = "HTTP"
   timeout_sec = 10
   enable_cdn  = false
+  session_affinity    = "CLIENT_IP"
 
   backend {
     group           = google_compute_instance_group_manager.api.instance_group
