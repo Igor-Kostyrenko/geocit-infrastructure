@@ -1,0 +1,14 @@
+---
+- name: update
+  hosts:
+    - grafana
+    - servers
+  remote_user: ansible
+  become: true
+  
+  tasks:
+    - name: Update and upgrade all packages to the latest version
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
