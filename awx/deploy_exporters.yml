@@ -83,13 +83,13 @@
         src: docker-compose-vm1.yml
         dest: "/home/ansible/promgrafnode/docker-compose.yml"
 
-    - name: Remove existing Docker containers
-      community.docker.docker_container:
-        name: "{{ item }}"
-        state: absent
-      loop:
-        - node-exporter
-        - cadvisor
+    # - name: Remove existing Docker containers
+    #   community.docker.docker_container:
+    #     name: "{{ item }}"
+    #     state: absent
+    #   loop:
+    #     - node-exporter
+    #     - cadvisor
 
     - name: Run Docker Compose
       shell: docker-compose -f  /home/ansible/promgrafnode/docker-compose.yml up -d
