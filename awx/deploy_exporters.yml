@@ -7,12 +7,14 @@
   tasks:
     - name: Install required packages
       ansible.builtin.apt:
-        pkg:
+        name:
           - apt-transport-https
           - ca-certificates
           - curl
           - gnupg
           - software-properties-common
+        state: present
+        update_cache: yes
 
     - name: Add Docker's official GPG key
       ansible.builtin.apt_key:
