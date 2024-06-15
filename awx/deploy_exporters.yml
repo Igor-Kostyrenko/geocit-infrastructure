@@ -84,7 +84,7 @@
         dest: "/home/ansible/promgrafnode/docker-compose.yml"
 
     - name: Remove existing Docker containers
-      docker_container:
+      community.docker.docker_container:
         name: "{{ item }}"
         state: absent
       loop:
