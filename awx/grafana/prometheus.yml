@@ -20,15 +20,15 @@ scrape_configs:
   - job_name: "node"
     scrape_interval: 60s 
     gce_sd_configs:
-      - project: "$GCP_PROJECT"
-        zone: "$GCP_ZONE"
+      - project: 	capybarageocity #"$GCP_PROJECT"
+        zone: europe-west3-c           #"$GCP_ZONE"
         port: 9100
     
   - job_name: "cadvisor" 
     scrape_interval: 60s 
     gce_sd_configs:
-      - project: "$GCP_PROJECT"
-        zone: "$GCP_ZONE"
+      - project: 	capybarageocity #"$GCP_PROJECT"
+        zone: europe-west3-c #"$GCP_ZONE"
         port: 9200
 
   - job_name: 'blackbox'
