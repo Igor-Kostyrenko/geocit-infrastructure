@@ -130,7 +130,7 @@
     - name: Install Maven facts
       become: true
       ansible.builtin.template:
-        src: facts.j2
+        src: geo/facts.j2
         dest: '/etc/ansible/facts.d/{{ maven_fact_group_name }}.fact'
         owner: root
         # Use group ID as group name varies by OS (e.g. root/wheel)
@@ -178,7 +178,7 @@
 
     - name: Copy tomcat service file
       template:
-        src: templates/tomcat.service.j2
+        src: geo/tomcat.service.j2
         dest: /etc/systemd/system/tomcat.service
       when: ansible_service_mgr == "systemd"
 
