@@ -1,0 +1,88 @@
+---
+- name: install_docker
+  hosts: grafana
+  remote_user: ansible
+  become: true
+
+  tasks:
+  - name: Create necessary directories
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      owner: ansible  
+      group: ansible  
+      mode: '0777'
+    loop:
+      - "{{ destin_folder }}/prometheus"
+      - "{{ destin_folder }}/alertmanager"
+      - "{{ destin_folder }}/blackbox-exporter"
+      - "{{ destin_folder }}/grafana/provisioning/datasources"
+      - "{{ destin_folder }}/grafana/provisioning/dashboards"
+
+  - name: Copy Docker Compose file
+    copy:
+      src: grafana/grafana/docker-compose-grafana.yml
+      dest: "{{ destin_folder }}/docker-compose.yml"
+      owner: ansible
+      group: ansible
+
+  # - name: Copy ENV file
+  #   copy:
+  #     src: .env
+  #     dest: "{{ destin_folder }}/.env"
+  #     owner: ansible
+  #     group: ansible
+    
+  - name: Copy grafana datasources file
+    copy:
+      src: grafana/grafana_datasources.yml
+      dest: "{{ destin_folder }}/grafana/provisioning/datasources/prometheus.yml"
+      owner: ansible
+      group: ansible
+
+  - name: Copy configuration dashboards files
+    copy:
+      src: grafana/"{{ item.src }}"
+      dest: "{{ destin_folder }}/grafana/provisioning/dashboards/{{ item.dest }}"
+      owner: ansible
+      group: ansible
+    loop:
+      - { src: 'blackbox_exporter.json', dest: 'blackbox_exporter.json' }
+      - { src: 'dashboards.yml', dest: 'dashboards.yml' }
+      - { src: 'node_exporter_full.json', dest: 'node_exporter_full.json' }
+
+  - name: Copy configuration files
+    copy:
+      src: grafana/"{{ item.src }}"
+      dest: "{{ destin_folder }}/prometheus/{{ item.dest }}"
+      owner: ansible
+      group: ansible
+    loop:
+      - { src: 'prometheus.yml', dest: 'prometheus.yml' }
+      - { src: 'alert_rules.yml', dest: 'alert_rules.yml' }
+
+  - name: Copy alert config file
+    copy:
+      src: grafana/alert_config.yml
+      dest: "{{ destin_folder }}/alertmanager/alert-config.yml"
+      owner: ansible
+      group: ansible
+
+  - name: Copy blackbox config file
+    copy:
+      src: grafana/blackbox-exporter-config.yml
+      dest: "{{ destin_folder }}/blackbox-exporter/blackbox-exporter-config.yml"
+      owner: ansible
+      group: ansible
+
+  - name: Docker Compose Down
+    shell: docker compose -f {{ destin_folder }}/docker-compose.yml down
+    become: true
+    become_user: ansible
+    become_method: sudo
+
+  - name: Run Docker Compose
+    shell: docker compose -f {{ destin_folder }}/docker-compose.yml up -d
+    become: true
+    become_user: ansible
+    become_method: sudo
