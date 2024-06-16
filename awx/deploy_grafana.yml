@@ -53,7 +53,7 @@
 
   - name: Copy configuration files
     copy:
-      src: grafana/"{{ item.src }}"
+      src: grafana/{{ item.src }}
       dest: "{{ destin_folder }}/prometheus/{{ item.dest }}"
       owner: ansible
       group: ansible
