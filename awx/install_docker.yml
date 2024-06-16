@@ -1,6 +1,8 @@
 ---
 - name: install_docker
-  hosts: servers
+  hosts:
+    - grafana
+    - servers
   remote_user: ansible
   become: true
 
