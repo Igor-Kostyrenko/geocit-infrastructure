@@ -1,5 +1,5 @@
 ---
-- name: install_docker
+- name: deploy_grafana
   hosts: grafana
   remote_user: ansible
   become: true
@@ -21,7 +21,7 @@
 
   - name: Copy Docker Compose file
     copy:
-      src: grafana/grafana/docker-compose-grafana.yml
+      src: grafana/docker-compose-grafana.yml
       dest: "{{ destin_folder }}/docker-compose.yml"
       owner: ansible
       group: ansible
