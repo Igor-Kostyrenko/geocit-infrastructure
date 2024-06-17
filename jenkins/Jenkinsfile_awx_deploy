@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+    environment {
+        AWX_URL = 'http://34.147.232.242:8052'
+        AWX_PROJECT_ID = '20' 
+    }
+    stages {
+        stage('Trigger AWX Workflow') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'awx-api-token', variable: 'AWX_API_TOKEN')]) {
+                        def response = httpRequest(
+                            url: "${AWX_URL}/api/v2/workflow_job_templates/${AWX_PROJECT_ID}/launch/",
+                            httpMode: 'POST',
+                            customHeaders: [
+                                [name: 'Content-Type', value: 'application/json'],
+                                [name: 'Authorization', value: "Bearer ${AWX_API_TOKEN}"]
+                            ]
+                        )
+                        echo "Response: ${response.content}"
+                    }
+                }
+            }
+        }
+    }
+}
