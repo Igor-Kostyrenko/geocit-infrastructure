@@ -26,15 +26,6 @@ pipeline {
 			    }
 			}
 		}
-		stage('Validation'){
-			input {
-				message "Do you want to approve this plan?"
-				ok "Approve this plan"
-			}
-			steps {
-			    echo "Approval accepted"
-			}
-		}
 		stage('Approve'){
 			steps {
 			    withCredentials([file(credentialsId: 'terraform_creds', variable: 'GOOGLE_CREDENTIALS')]) {
