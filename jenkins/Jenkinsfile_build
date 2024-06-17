@@ -25,7 +25,7 @@ pipeline {
      steps {
                 script {
                     def projectId = sh(script: "gcloud config get-value project", returnStdout: true).trim()
-                    def secretName = sh(script: "gcloud secrets list --format='value(name)'", returnStdout: true).trim()
+                    def secretName = sh(script: "gcloud secrets list --filter='name:prod' --format='value(name)'", returnStdout: true).trim()
 
                     def dbPassword = sh(script: "gcloud secrets versions access latest --secret=${secretName} --project=${projectId}", returnStdout: true).trim()
                     env.passwordBD = dbPassword
