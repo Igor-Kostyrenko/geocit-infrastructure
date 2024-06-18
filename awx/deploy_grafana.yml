@@ -26,6 +26,12 @@
       owner: ansible
       group: ansible
 
+  - name: Replace DISCORD_WEBHOOK_URL in Docker Compose file
+      replace:
+        path: "{{ destin_folder }}/docker-compose.yml"
+        regexp: '\$DISCORD_WEBHOOK_URL'
+        replace: "{{ discord_webhook_url }}"
+  
   # - name: Copy ENV file
   #   copy:
   #     src: .env
