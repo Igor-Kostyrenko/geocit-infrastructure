@@ -30,7 +30,7 @@
 
   - name: Replace DISCORD_WEBHOOK_URL in Docker Compose file
     replace:
-      path: /tmp/docker-compose.yml
+      path: "{{ destin_folder }}/docker-compose.yml"
       regexp: '\$\{DISCORD_WEBHOOK_URL\}'
       replace: "{{ discord_webhook_url }}"
   
