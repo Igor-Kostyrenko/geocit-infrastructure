@@ -1,0 +1,212 @@
+---
+
+- name: Deploy_geocitizen
+  hosts: servers
+  remote_user: ansible
+  become: true
+
+  vars:
+
+    maven_redis_filename: 'apache-maven-{{ maven_version }}-bin.tar.gz'
+    # Maven version number
+    maven_version: '3.9.6'
+
+    # Mirror to download the Maven redistributable package from
+    maven_mirror: "http://archive.apache.org/dist/maven/maven-{{ maven_version | regex_replace('\\..*', '') }}/{{ maven_version }}/binaries"
+
+    # Base installation directory the Maven distribution
+    maven_install_dir: /opt/maven
+
+    # Directory to store files downloaded for Maven installation
+    maven_download_dir: "{{ x_ansible_download_dir | default(ansible_env.HOME + '/.ansible/tmp/downloads') }}"
+
+    # The number of seconds to wait before the Maven download times-out
+    maven_download_timeout: 10
+
+    # Whether to use the proxy when downloading Maven (if the proxy environment variable is present)
+    maven_use_proxy: true
+
+    # Whether to validate HTTPS certificates when downloading Maven
+    maven_validate_certs: true
+
+    # If this is the default installation, symbolic links to mvn and mvnDebug will
+    # be created in /usr/local/bin
+    maven_is_default_installation: true
+
+    # Name of the group of Ansible facts relating this Maven installation.
+    #
+    # Override if you want use this role more than once to install multiple versions
+    # of Maven.
+    #
+    # e.g. maven_fact_group_name: maven_3_3
+    # would change the Maven home fact to:
+    # ansible_local.maven_3_2.general.home
+    maven_fact_group_name: maven
+    # defaults file for geocitizen
+    tomcat_archive_url: https://archive.apache.org/dist/tomcat/tomcat-9/v{{ tomcat_ver }}/bin/apache-tomcat-{{ tomcat_ver }}.tar.gz
+    tomcat_archive_dest: /tmp/apache-tomcat-{{ tomcat_ver }}.tar.gz
+    tomcat_ver: 9.0.89  # Tomcat version to install
+    java_home: "/usr/lib/jvm/java-1.8.0-openjdk-amd64"
+    jfrog_host: $JFROG_HOST
+    jfrog_port: $JFROG_PORT
+    jfrog_repo: $JFROG_REPO
+    jfrog_env: $JFROG_ENV
+    jfrog_build_number: $JFROG_BUILD_NUMBER
+    jfrog_hash: $JFROG_HASH
+    jfrog_api_key: $JFROG_API_KEY
+
+
+  tasks:
+    - name: Install_Java
+      ansible.builtin.apt:
+        update_cache: true
+        name: openjdk-8-jdk
+        state: present
+
+    - name: Load version vars
+      with_first_found:
+        - 'geo/{{ maven_version }}.yml'
+        - ../vars/versions/default.yml
+      ansible.builtin.include_vars: '{{ item }}'
+
+    - name: Assert version vars
+      ansible.builtin.assert:
+        that:
+          - "maven_redis_sha256sum not in (None, '')"
+
+    - name: Create download directory
+      ansible.builtin.file:
+        state: directory
+        mode: 'u=rwx,go=rx'
+        dest: '{{ maven_download_dir }}'
+
+    - name: Download Maven
+      ansible.builtin.get_url:
+        url: '{{ maven_mirror }}/{{ maven_redis_filename }}'
+        dest: '{{ maven_download_dir }}/{{ maven_redis_filename }}'
+        checksum: 'sha256:{{maven_redis_sha256sum}}'
+        force: false
+        use_proxy: '{{ maven_use_proxy }}'
+        validate_certs: '{{ maven_validate_certs }}'
+        timeout: '{{ maven_download_timeout }}'
+        mode: 'u=rw,go=r'
+
+    - name: Create Maven installation directory
+      become: true
+      ansible.builtin.file:
+        state: directory
+        owner: root
+        # Use group ID as group name varies by OS (e.g. root/wheel)
+        group: '0'
+        mode: 'u=rwx,go=rx'
+        dest: '{{ maven_install_dir }}'
+
+    - name: Install Maven
+      become: true
+      ansible.builtin.unarchive:
+        src: '{{ maven_download_dir }}/{{ maven_redis_filename }}'
+        dest: '{{ maven_install_dir }}'
+        copy: false
+        owner: root
+        # Use group ID as group name varies by OS (e.g. root/wheel)
+        group: '0'
+        mode: 'go-w'
+        creates: '{{ maven_install_dir }}/apache-maven-{{ maven_version }}'
+
+    - name: Create symbolic links
+      ansible.builtin.include_tasks: geo/create-symbolic-links.yml
+      when: maven_is_default_installation
+
+    - name: Create Ansible facts.d directory
+      become: true
+      ansible.builtin.file:
+        state: directory
+        dest: /etc/ansible/facts.d
+        owner: root
+        # Use group ID as group name varies by OS (e.g. root/wheel)
+        group: '0'
+        mode: 'u=rwx,go=rx'
+
+    - name: Install Maven facts
+      become: true
+      ansible.builtin.template:
+        src: geo/facts.j2
+        dest: '/etc/ansible/facts.d/{{ maven_fact_group_name }}.fact'
+        owner: root
+        # Use group ID as group name varies by OS (e.g. root/wheel)
+        group: '0'
+        mode: 'u=rw,go=r'
+
+    - name: Re-read facts
+      ansible.builtin.setup:
+        filter: ansible_local
+
+    - name: Create Tomcat group
+      become: true
+      group:
+        name: tomcat
+        state: present
+
+    - name: Create Tomcat user
+      become: true
+      user:
+        name: tomcat
+        state: present
+
+    - name: Download Tomcat
+      get_url:
+        url: "{{ tomcat_archive_url }}"
+        dest: "{{ tomcat_archive_dest }}"
+
+
+    - name: Create tomcat directory
+      file:
+        path: /usr/share/tomcat
+        state: directory
+        owner: tomcat
+        group: tomcat
+
+    - name: Extract tomcat archive
+      unarchive:
+        src: "{{ tomcat_archive_dest }}"
+        dest: /usr/share/tomcat
+        owner: tomcat
+        group: tomcat
+        remote_src: true
+        extra_opts: "--strip-components=1"
+        creates: /usr/share/tomcat/bin
+
+    - name: Copy tomcat service file
+      template:
+        src: geo/tomcat.service.j2
+        dest: /etc/systemd/system/tomcat.service
+      when: ansible_service_mgr == "systemd"
+
+    - name: Start_and enable tomcat
+      service:
+        daemon_reload: true
+        name: tomcat
+        state: started
+        enabled: true
+
+    - name: Download application build using Artifactory API KEY
+      shell: curl -H "X-JFrog-Art-Api:{{ jfrog_api_key }}" http://{{ jfrog_host }}:{{ jfrog_port }}/artifactory/{{ jfrog_repo }}/{{ jfrog_env }}-citizen-{{ jfrog_build_number }}-{{ jfrog_hash }}.war -o /usr/share/tomcat/citizen.war
+
+    - name: Change file ownership
+      ansible.builtin.file:
+        path: "/usr/share/tomcat/citizen.war"
+        mode: '0755'
+        owner: tomcat
+        group: tomcat
+
+    - name: Move build
+      shell: mv /usr/share/tomcat/citizen.war /usr/share/tomcat/webapps/citizen.war
+
+    - name: Restart tomcat service
+      shell: sudo systemctl restart tomcat
+
+  handlers:
+    - name: restart tomcat
+      service:
+        name: tomcat
+        state: restarted

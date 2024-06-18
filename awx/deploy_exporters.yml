@@ -1,0 +1,28 @@
+---
+- name: deploy_exporters
+  hosts: servers
+  remote_user: ansible
+  become: true
+
+  tasks:
+    - name: Create necessary directories
+      ansible.builtin.file:
+        path: /home/ansible/promgrafnode
+        state: directory
+        mode: '0755'
+
+    - name: Copy Docker Compose file
+      copy:
+        src: exporters/docker-compose-servers.yml
+        dest: "/home/ansible/promgrafnode/docker-compose.yml"
+
+    # - name: Remove existing Docker containers
+    #   community.docker.docker_container:
+    #     name: "{{ item }}"
+    #     state: absent
+    #   loop:
+    #     - node-exporter
+    #     - cadvisor
+
+    - name: Run Docker Compose
+      shell: docker-compose -f  /home/ansible/promgrafnode/docker-compose.yml up -d
